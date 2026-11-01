@@ -2,9 +2,11 @@
 
 Восстановленные функциональные требования, пользовательские сценарии и отдельный перечень неоднозначностей и дефектов приведены в [REQUIREMENTS.md](REQUIREMENTS.md).
 
+Изменения после анализа и результаты запуска: [AUDIT.md](AUDIT.md). Ссылки на исходный код закреплены на коммите `362510b`.
+
 ## 1. Область анализа
 
-Документ описывает текущую реализацию по исходному коду: моделям, миграциям, маршрутам, представлениям, формам, шаблонам, настройкам, задачам и тестам. Базовый коммит — `362510b` (`Add homework assignment`). Анализ выполнен статически: приложение, база данных, Celery и внешние API не запускались; успешное выполнение тестов и работоспособность интеграций не подтверждены. Исходный код приложения не изменялся.
+Документ описывает исходную реализацию до модернизации по коду: моделям, миграциям, маршрутам, представлениям, формам, шаблонам, настройкам, задачам и тестам. Базовый коммит — `362510b` (`Add homework assignment`). Анализ выполнен статически: приложение, база данных, Celery и внешние API не запускались; успешное выполнение тестов и работоспособность интеграций не подтверждены. Исходный код приложения не изменялся.
 
 ## 2. Назначение и технологический стек
 
@@ -14,7 +16,7 @@
 
 ### Библиотеки и зависимости
 
-Версии ниже взяты из [requirements.txt](requirements.txt), а не из установленного окружения.
+Версии ниже взяты из [requirements.txt](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/requirements.txt), а не из установленного окружения.
 
 | Технология | Версия | Назначение в проекте |
 | --- | --- | --- |
@@ -33,10 +35,10 @@
 
 Внешние зависимости исполнения:
 
-- PostgreSQL: база `investing`, подключение к `localhost:5432` в [config/settings.py](config/settings.py).
+- PostgreSQL: база `investing`, подключение к `localhost:5432` в [config/settings.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/config/settings.py).
 - Redis: брокер `redis://127.0.0.1:6379/0`; настройка кэша или хранилища результатов Celery отсутствует.
 - Tinkoff Invest API: требует `TINKOFF_TOKEN`; используется для импорта, последних цен и исторических свечей.
-- CDN в [базовом шаблоне](dashboard/templates/dashboard/base.html): Plotly.js, jQuery, Popper, Font Awesome, Moment.js и Tempus Dominus. Bootstrap CSS хранится локально в приложениях.
+- CDN в [базовом шаблоне](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/templates/dashboard/base.html): Plotly.js, jQuery, Popper, Font Awesome, Moment.js и Tempus Dominus. Bootstrap CSS хранится локально в приложениях.
 
 ## 3. Структура и основные компоненты
 
@@ -94,7 +96,7 @@ flowchart LR
 
 ### Акция: `Share`
 
-Источник: [dashboard/models.py](dashboard/models.py). Имя таблицы по стандартному соглашению Django — `dashboard_share`.
+Источник: [dashboard/models.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/models.py). Имя таблицы по стандартному соглашению Django — `dashboard_share`.
 
 | Атрибут | Тип | Ограничения и назначение |
 | --- | --- | --- |
@@ -109,11 +111,11 @@ flowchart LR
 | `is_trend_high` | `BooleanField` | Направление изменения цены; разрешён `NULL` |
 | `updated_at` | `DateTimeField` | `auto_now=True`, разрешён `NULL`; обновление при сохранении модели |
 
-Семь миграций последовательно создают акцию, добавляют уникальность FIGI и тикера, `uid`, цену и направление, уточняют подписи и добавляют `updated_at`. В текущей модели у `updated_at` есть `blank=True`, а в миграции `0007` этот параметр отсутствует: состояние модели и миграций слегка расходится в части валидации.
+Семь миграций последовательно создают акцию, добавляют уникальность FIGI и тикера, `uid`, цену и направление, уточняют подписи и добавляют `updated_at`. В модели у `updated_at` явно указан `blank=True`, а в миграции `0007` этот параметр отсутствует. Дополнительная проверка при модернизации показала, что различие только текстовое: `auto_now=True` само устанавливает `blank=True`; отдельной миграции для этого не требуется.
 
 ### Пользователи и служебные сущности
 
-В [user/models.py](user/models.py) `User` — результат `get_user_model()`. Собственная пользовательская модель и `AUTH_USER_MODEL` не заданы, поэтому используется стандартный `django.contrib.auth.models.User` (`auth_user`): идентификатор, уникальный `username`, хеш пароля, email, имя и фамилия, признаки активности и прав, даты входа и регистрации.
+В [user/models.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/user/models.py) `User` — результат `get_user_model()`. Собственная пользовательская модель и `AUTH_USER_MODEL` не заданы, поэтому используется стандартный `django.contrib.auth.models.User` (`auth_user`): идентификатор, уникальный `username`, хеш пароля, email, имя и фамилия, признаки активности и прав, даты входа и регистрации.
 
 Регистрация передаёт email одновременно как `username` и `email` в `create_user()`. Пароль сохраняется средствами Django как хеш. Проверка повторного email реализована формой; отдельное ограничение уникальности email в собственной модели отсутствует.
 
@@ -129,7 +131,7 @@ HTTP-запрос поступает в Django через WSGI или ASGI. Midd
 
 ### HTML-интерфейс акций
 
-Источники: [dashboard/urls.py](dashboard/urls.py), [dashboard/views.py](dashboard/views.py), [dashboard/forms.py](dashboard/forms.py).
+Источники: [dashboard/urls.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/urls.py), [dashboard/views.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/views.py), [dashboard/forms.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/forms.py).
 
 | Маршрут | Обработка и доступ |
 | --- | --- |
@@ -169,7 +171,7 @@ HTTP-запрос поступает в Django через WSGI или ASGI. Midd
 
 ### Регистрация и сессии
 
-Источники: [user/views.py](user/views.py), [user/forms.py](user/forms.py), [user/urls.py](user/urls.py), [config/urls.py](config/urls.py).
+Источники: [user/views.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/user/views.py), [user/forms.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/user/forms.py), [user/urls.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/user/urls.py), [config/urls.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/config/urls.py).
 
 В корневом маршруте указан префикс `"user"` без `/`, а дочерние пути начинаются сразу с имени. Поэтому фактические адреса — **`/userlogin/`, `/userregistration/`, `/userlogout/`**, а не `/user/login/` и подобные. Шаблоны используют именованные маршруты и получают эти же адреса.
 
@@ -191,7 +193,7 @@ HTTP-запрос поступает в Django через WSGI или ASGI. Midd
 
 ### Обновление последних цен
 
-Источники: [config/celery.py](config/celery.py), [dashboard/tasks.py](dashboard/tasks.py), [dashboard/services/market_data.py](dashboard/services/market_data.py).
+Источники: [config/celery.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/config/celery.py), [dashboard/tasks.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/tasks.py), [dashboard/services/market_data.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/services/market_data.py).
 
 1. Celery Beat публикует `dashboard.tasks.update_last_price` каждые **10 секунд** (`schedule = 10.0`), хотя ключ расписания назван `add-every-5-min`.
 2. Worker выбирает все акции через `Share.objects.all()` и последовательно обходит их.
@@ -203,7 +205,7 @@ HTTP-запрос поступает в Django через WSGI или ASGI. Midd
 
 ### Исторический график
 
-[get_graph()](dashboard/services/graph.py) запрашивает дневные свечи от `now() - timedelta(days=180)` через `client.get_all_candles()`. По датам и `candle.close.units` строится линейный `Scatter`, затем `plot(..., output_type="div")` формирует HTML для карточки. Шаблон вставляет этот HTML с отключённым экранированием. Локального накопления свечей, кэша графика и выбора периода пользователем нет.
+[get_graph()](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/services/graph.py) запрашивает дневные свечи от `now() - timedelta(days=180)` через `client.get_all_candles()`. По датам и `candle.close.units` строится линейный `Scatter`, затем `plot(..., output_type="div")` формирует HTML для карточки. Шаблон вставляет этот HTML с отключённым экранированием. Локального накопления свечей, кэша графика и выбора периода пользователем нет.
 
 ## 8. Ограничения, выявленные при чтении кода
 
@@ -225,6 +227,6 @@ Docker Compose запускает только БД и брокер. Конте�
 
 ## 9. Тесты и границы подтверждённости
 
-В [dashboard/tests.py](dashboard/tests.py) находится класс `DashboardTests(APITestCase)` с десятью методами: HTML-список, REST-список, получение одной акции, создание, изменение и удаление, а также отрицательные сценарии 400/404. Данные создаются в `setUp()` через ORM.
+В [dashboard/tests.py](https://github.com/gospodiupasibozheeeee/aidd-topic-03-homework/blob/362510b/dashboard/tests.py) находится класс `DashboardTests(APITestCase)` с десятью методами: HTML-список, REST-список, получение одной акции, создание, изменение и удаление, а также отрицательные сценарии 400/404. Данные создаются в `setUp()` через ORM.
 
 Проверок регистрации и входа, доступа к HTML-изменениям, фильтрации, поиска, пагинации, фоновых задач, импорта и графика в репозитории нет. Процент покрытия не настроен. Для запуска предусмотрено `python manage.py test`; текущий отчёт основан на чтении тестов, без их выполнения. Условия доступности PostgreSQL, действительность токена и совместимость зависимостей требуют отдельной проверки запуска.

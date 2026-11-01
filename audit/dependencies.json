@@ -1,0 +1,140 @@
+{
+  "date": "2026-11-01",
+  "tool": "pip-audit 2.10.1",
+  "baseline_commit": "362510b",
+  "before": {
+    "packages": 40,
+    "vulnerabilities": 65,
+    "affected": [
+      {
+        "name": "black",
+        "version": "23.1.0",
+        "advisories": [
+          "PYSEC-2024-48",
+          "PYSEC-2024-48",
+          "PYSEC-2026-2121",
+          "PYSEC-2026-2120",
+          "CVE-2026-114134"
+        ]
+      },
+      {
+        "name": "django",
+        "version": "4.1.7",
+        "advisories": [
+          "PYSEC-2023-61",
+          "PYSEC-2023-61",
+          "PYSEC-2023-100",
+          "PYSEC-2023-100",
+          "PYSEC-2023-222",
+          "PYSEC-2023-222",
+          "PYSEC-2023-225",
+          "PYSEC-2023-226",
+          "PYSEC-2023-226",
+          "PYSEC-2023-225",
+          "PYSEC-2026-1297",
+          "PYSEC-2025-47",
+          "PYSEC-2025-105",
+          "PYSEC-2025-107",
+          "PYSEC-2025-108",
+          "PYSEC-2026-1297",
+          "PYSEC-2026-3717",
+          "PYSEC-2026-198",
+          "PYSEC-2026-199",
+          "PYSEC-2026-201",
+          "PYSEC-2026-2090",
+          "PYSEC-2026-2091",
+          "PYSEC-2026-2092",
+          "PYSEC-2026-3717",
+          "PYSEC-2026-4035"
+        ]
+      },
+      {
+        "name": "djangorestframework",
+        "version": "3.14.0",
+        "advisories": [
+          "PYSEC-2026-1304",
+          "PYSEC-2026-1304",
+          "PYSEC-2026-3827",
+          "PYSEC-2026-3828",
+          "CVE-2026-114138",
+          "CVE-2026-114136",
+          "CVE-2026-114137"
+        ]
+      },
+      {
+        "name": "grpcio",
+        "version": "1.51.3",
+        "advisories": [
+          "PYSEC-2026-1425",
+          "PYSEC-2026-1424",
+          "PYSEC-2026-1425",
+          "PYSEC-2026-1424"
+        ]
+      },
+      {
+        "name": "protobuf",
+        "version": "3.20.3",
+        "advisories": [
+          "PYSEC-2026-1806",
+          "PYSEC-2026-1805",
+          "PYSEC-2026-1806",
+          "PYSEC-2026-1805"
+        ]
+      },
+      {
+        "name": "pydantic",
+        "version": "1.10.6",
+        "advisories": [
+          "PYSEC-2026-1812",
+          "PYSEC-2026-1812"
+        ]
+      },
+      {
+        "name": "redis",
+        "version": "4.5.1",
+        "advisories": [
+          "PYSEC-2023-45",
+          "PYSEC-2023-46",
+          "PYSEC-2023-46",
+          "PYSEC-2023-45"
+        ]
+      },
+      {
+        "name": "sqlparse",
+        "version": "0.4.3",
+        "advisories": [
+          "PYSEC-2023-87",
+          "PYSEC-2023-87",
+          "PYSEC-2026-1940",
+          "PYSEC-2026-1940",
+          "PYSEC-2026-3697",
+          "PYSEC-2026-3696",
+          "PYSEC-2026-3698",
+          "PYSEC-2026-3699",
+          "PYSEC-2026-3698",
+          "PYSEC-2026-3697",
+          "PYSEC-2026-3699",
+          "PYSEC-2026-3696",
+          "PYSEC-2026-3923",
+          "GHSA-27jp-wm6q-gp25"
+        ]
+      }
+    ],
+    "skipped": [
+      {
+        "name": "tinkoff",
+        "reason": "Dependency not found on PyPI and could not be audited: tinkoff (0.1.1)"
+      },
+      {
+        "name": "tinkoff-investments",
+        "reason": "Dependency not found on PyPI and could not be audited: tinkoff-investments (0.2.0b50)"
+      }
+    ]
+  },
+  "after": {
+    "packages": 34,
+    "vulnerabilities": 0,
+    "affected": [],
+    "skipped": []
+  }
+}

@@ -1,24 +1,33 @@
-from django.core.management.base import BaseCommand
-from tinkoff.invest import Client
+from django.core.management.base import BaseCommand, CommandError
+from django.db import IntegrityError
 
-from config.settings import TINKOFF_TOKEN
 from dashboard.models import Share
+from dashboard.services.client import MarketDataClient, MarketDataError
 
 
 class Command(BaseCommand):
-    help = "Add shares to DB"
+    help = "Import or update the share directory from T-Invest"
 
     def handle(self, *args, **options):
-        with Client(TINKOFF_TOKEN) as client:
-            shares = client.instruments.shares()
-            for share in shares.instruments:
-                Share.objects.get_or_create(
-                    figi=share.figi,
-                    name=share.name,
-                    isin=share.isin,
-                    ticker=share.ticker,
-                    currency=share.currency,
-                    uid=share.uid,
+        try:
+            with MarketDataClient() as client:
+                instruments = client.shares()
+        except MarketDataError as exc:
+            raise CommandError(str(exc)) from exc
+        created = updated = 0
+        for instrument in instruments:
+            try:
+                defaults = {
+                    field: instrument[field]
+                    for field in ("name", "isin", "ticker", "currency", "uid")
+                }
+                _, is_new = Share.objects.update_or_create(
+                    figi=instrument["figi"], defaults=defaults
                 )
-
-
+            except (KeyError, TypeError, IntegrityError) as exc:
+                raise CommandError(
+                    "Invalid or conflicting instrument in market response"
+                ) from exc
+            created += is_new
+            updated += not is_new
+        self.stdout.write(self.style.SUCCESS(f"Created: {created}; updated: {updated}"))

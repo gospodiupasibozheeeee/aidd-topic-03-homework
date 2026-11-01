@@ -1,0 +1,7 @@
+[tool.black]
+target-version = ["py312"]
+extend-exclude = "/migrations/"
+
+[tool.isort]
+profile = "black"
+skip_glob = ["*/migrations/*"]

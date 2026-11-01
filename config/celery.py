@@ -1,6 +1,7 @@
 import os
 
 from celery import Celery
+from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
@@ -11,8 +12,9 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
-    "add-every-5-min": {
+    "update-last-prices": {
         "task": "dashboard.tasks.update_last_price",
-        "schedule": 10.0,
+        "schedule": settings.MARKET_UPDATE_INTERVAL,
+        "options": {"expires": settings.MARKET_UPDATE_INTERVAL},
     },
 }

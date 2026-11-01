@@ -1,13 +1,24 @@
-import logging
+import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = ""
+DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() in {"true", "1", "yes"}
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("Set DJANGO_SECRET_KEY when DJANGO_DEBUG=false")
+    SECRET_KEY = get_random_secret_key()
 
-DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(
+    ","
+)
+AUTHENTICATION_BACKENDS = ["user.backends.CaseInsensitiveModelBackend"]
 
 
 INSTALLED_APPS = [
@@ -31,6 +42,10 @@ CRISPY_TEMPLATE_PACK = "bootstrap3"
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
+    "COERCE_DECIMAL_TO_STRING": False,
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
+    ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
@@ -48,7 +63,7 @@ LOGGING = {
         "file": {
             "class": "logging.FileHandler",
             "formatter": "main_format",
-            "filename": "app.logs",
+            "filename": BASE_DIR / "app.logs",
         },
     },
     "loggers": {
@@ -56,7 +71,6 @@ LOGGING = {
     },
 }
 
-logger = logging.getLogger("main")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -88,20 +102,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # }
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "investing",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "localhost",
-        "PORT": "5432",
+DB_ENGINE = os.getenv("DJANGO_DB_ENGINE", "sqlite")
+if DB_ENGINE == "postgresql":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB", "investing"),
+            "USER": os.getenv("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
+            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        }
     }
-}
+elif DB_ENGINE == "sqlite":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
+        }
+    }
+else:
+    raise ImproperlyConfigured("DJANGO_DB_ENGINE must be sqlite or postgresql")
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -128,17 +150,27 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-TINKOFF_TOKEN = ""
+TINKOFF_TOKEN = os.getenv("TINKOFF_TOKEN", "")
+TINKOFF_API_URL = os.getenv(
+    "TINKOFF_API_URL", "https://invest-public-api.tbank.ru/rest"
+)
+TINKOFF_TIMEOUT = float(os.getenv("TINKOFF_TIMEOUT", "10"))
+TINKOFF_CA_BUNDLE = os.getenv("TINKOFF_CA_BUNDLE", "")
+MARKET_UPDATE_INTERVAL = float(os.getenv("MARKET_UPDATE_INTERVAL", "10"))
+if MARKET_UPDATE_INTERVAL <= 0 or TINKOFF_TIMEOUT <= 0:
+    raise ImproperlyConfigured("Market interval and timeout must be positive")
 
 """Celery Configuration Options"""
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-# CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672'
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_DEFAULT_QUEUE = os.getenv("CELERY_TASK_DEFAULT_QUEUE", "celery")
 
 """Debug Celery"""
 CELERY_TASK_ALWAYS_EAGER = False

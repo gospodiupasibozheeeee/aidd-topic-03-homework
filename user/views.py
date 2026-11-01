@@ -1,64 +1,45 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
+from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
-from django.views.generic import View
+from django.urls import reverse_lazy
+from django.views.generic import FormView, View
 
 from .forms import AuthForm, RegistrationForm
 
 
-class AuthView(View):
-    """Авторизация"""
+class AuthView(FormView):
+    template_name = "user/auth.html"
+    form_class = AuthForm
+    success_url = reverse_lazy("dashboard:index")
 
-    @staticmethod
-    def get(request):
-        return render(request, "user/auth.html", {"form": AuthForm})
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "request": self.request}
 
-    @staticmethod
-    def post(request):
-        form = AuthForm(request.POST)
-        user = authenticate(
-            request, username=form.data["email"].lower(), password=form.data["password"]
-        )
-
-        if user is not None:
-            login(request, user)
-            return redirect("dashboard:index")
-        else:
-            return render(
-                request,
-                "user/auth.html",
-                {
-                    "form": form,
-                    "error": "Неверный логин или пароль! Повторите попытку.",
-                },
-            )
+    def form_valid(self, form):
+        login(self.request, form.user)
+        return super().form_valid(form)
 
 
-class RegistrationView(View):
-    """Регистрация"""
+class RegistrationView(FormView):
+    template_name = "user/registration.html"
+    form_class = RegistrationForm
+    success_url = reverse_lazy("dashboard:index")
 
-    @staticmethod
-    def get(request):
-        return render(request, "user/registration.html", {"form": RegistrationForm})
-
-    @staticmethod
-    def post(request):
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("dashboard:index")
-        else:
-            return render(
-                request,
-                "user/registration.html",
-                {"form": form, "error": form.errors["__all__"].data[0].message},
-            )
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                user = form.save()
+        except IntegrityError:
+            form.add_error("email", "Данный e-mail уже зарегистрирован!")
+            return self.form_invalid(form)
+        login(self.request, user, backend="user.backends.CaseInsensitiveModelBackend")
+        return super().form_valid(form)
 
 
 class LogoutView(View):
-    """Выход"""
+    def get(self, request):
+        return render(request, "user/logout.html")
 
-    @staticmethod
-    def get(request):
+    def post(self, request):
         logout(request)
         return redirect("dashboard:index")

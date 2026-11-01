@@ -1,11 +1,16 @@
-from django.shortcuts import render, redirect
+import logging
+
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, View, UpdateView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView, View
 
 from .forms import ShareModelForm
 from .models import Share
+from .services.client import MarketDataError
 from .services.graph import get_graph
-from django.contrib.auth.mixins import UserPassesTestMixin
+
+logger = logging.getLogger("main")
 
 
 class IsUserAuthenticatedMixin(UserPassesTestMixin):
@@ -29,12 +34,19 @@ class ShareListView(ListView):
 class ShareDetailView(View):
     @staticmethod
     def get(request, pk):
-        share = Share.objects.get(id=pk)
+        share = get_object_or_404(Share, pk=pk)
+        try:
+            graph = get_graph(share)
+            graph_error = "" if graph else "За выбранный период нет рыночных данных."
+        except MarketDataError as exc:
+            logger.warning("Graph unavailable for share %s: %s", share.pk, exc)
+            graph = ""
+            graph_error = "Рыночные данные временно недоступны. Попробуйте позже."
 
         return render(
             request,
             "dashboard/detail.html",
-            {"plot_div": get_graph(share), "share": share},
+            {"plot_div": graph, "graph_error": graph_error, "share": share},
         )
 
 
@@ -56,7 +68,7 @@ class ShareUpdateView(IsUserAuthenticatedMixin, UpdateView):
 
 
 class ShareDeleteView(IsUserAuthenticatedMixin, DeleteView):
-    """Удаление задачи"""
+    """Удаление инструмента"""
 
     model = Share
     template_name = "dashboard/delete.html"

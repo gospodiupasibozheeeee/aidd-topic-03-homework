@@ -1,0 +1,9 @@
+{% extends "user/base.html" %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <h1 class="h3 mb-3">Выйти из системы?</h1>
+    <button type="submit" class="btn btn-primary">Выход</button>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

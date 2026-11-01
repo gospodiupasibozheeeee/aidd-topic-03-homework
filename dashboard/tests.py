@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -7,6 +8,8 @@ from dashboard.models import Share
 
 class DashboardTests(APITestCase):
     def setUp(self) -> None:
+        self.user = get_user_model().objects.create_user(username="tester@example.com")
+        self.client.force_authenticate(user=self.user)
         self.apple_share = Share.objects.create(
             figi="BBG000B9XRY4",
             isin="US0378331005",
