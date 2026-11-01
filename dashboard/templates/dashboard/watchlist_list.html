@@ -1,0 +1,137 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+<title>Персональный мониторинг акций</title>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fa fa-bell text-primary"></i> Персональный мониторинг акций</h2>
+    <a href="{% url 'dashboard:notifications' %}" class="btn btn-outline-info">
+        <i class="fa fa-envelope"></i> Журнал уведомлений
+        {% if unread_notifications_count > 0 %}
+            <span class="badge badge-danger">{{ unread_notifications_count }}</span>
+        {% endif %}
+    </a>
+</div>
+
+<div class="row">
+    <!-- Форма добавления целевого уровня -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fa fa-plus-circle"></i> Настроить оповещение</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashboard:watchlist' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="{{ form.share.id_for_label }}"><strong>Акция:</strong></label>
+                        {{ form.share }}
+                        {% if form.share.errors %}
+                            <div class="text-danger small">{{ form.share.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.condition.id_for_label }}"><strong>Условие срабатывания:</strong></label>
+                        {{ form.condition }}
+                        {% if form.condition.errors %}
+                            <div class="text-danger small">{{ form.condition.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.target_price.id_for_label }}"><strong>Целевой ценовой уровень:</strong></label>
+                        {{ form.target_price }}
+                        <small class="form-text text-muted">Укажите цену, при достижении которой придет уведомление.</small>
+                        {% if form.target_price.errors %}
+                            <div class="text-danger small">{{ form.target_price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fa fa-check"></i> Сохранить оповещение
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список отслеживаемых инструментов -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="fa fa-list"></i> Активные уровни наблюдения</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if watchlist_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Акция</th>
+                                    <th>Текущая цена</th>
+                                    <th>Условие</th>
+                                    <th>Целевая цена</th>
+                                    <th>Статус</th>
+                                    <th>Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in watchlist_items %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'dashboard:detail' item.share.id %}" class="font-weight-bold">
+                                                {{ item.share.ticker }}
+                                            </a>
+                                            <div class="text-muted small">{{ item.share.name }}</div>
+                                        </td>
+                                        <td>
+                                            {% if item.share.last_price %}
+                                                {{ item.share.last_price }} {{ item.share.currency }}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.condition == 'ABOVE' %}
+                                                <span class="badge badge-success">&ge; Выше или равна</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">&le; Ниже или равна</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="font-weight-bold">
+                                            {{ item.target_price }} {{ item.share.currency }}
+                                        </td>
+                                        <td>
+                                            {% if item.is_triggered %}
+                                                <span class="badge badge-danger"><i class="fa fa-bell"></i> Сработало</span>
+                                            {% else %}
+                                                <span class="badge badge-info"><i class="fa fa-eye"></i> В ожидании</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="post" action="{% url 'dashboard:watchlist_delete' item.id %}" onsubmit="return confirm('Удалить оповещение?');" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Удалить">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="fa fa-binoculars fa-3x mb-3 text-secondary"></i>
+                        <p class="mb-0">Список наблюдения пока пуст. Выберите акцию и установите целевой уровень слева.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

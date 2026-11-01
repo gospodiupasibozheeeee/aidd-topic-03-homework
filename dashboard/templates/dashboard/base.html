@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-100">
+<html lang="ru" class="h-100">
 <head>
     <meta charset="UTF-8">
 
     {% block title %}
+    <title>Investing Demo</title>
     {% endblock %}
 
     {% load static %}
@@ -12,6 +13,7 @@
     <link href="{% static 'dashboard/css/sticky-footer-navbar.css'%}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
 
     <!-- Font Awesome -->
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
@@ -22,49 +24,64 @@
     <!-- Tempus Dominus Bootstrap 4 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-XPTBwC3SBoWHSmKasAk01c08M6sIA5gF5+sRxqak2Qs=" crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
-
-
 </head>
 <body class="d-flex flex-column h-100">
 
 <div class="container">
-    <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
-        <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-            <li><a href="{% url 'dashboard:index' %}" class="nav-link px-2 link-secondary">Главная</a></li>
+    <header class="d-flex flex-wrap align-items-center justify-content-between py-3 mb-4 border-bottom">
+        <ul class="nav col-12 col-md-auto mb-2 mb-md-0 align-items-center">
+            <li><a href="{% url 'dashboard:index' %}" class="nav-link px-2 font-weight-bold text-dark">Investing Demo</a></li>
+            <li><a href="{% url 'dashboard:index' %}" class="nav-link px-2 text-secondary">Акции</a></li>
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'dashboard:portfolio' %}" class="nav-link px-2 text-secondary">Портфель</a></li>
+                <li><a href="{% url 'dashboard:watchlist' %}" class="nav-link px-2 text-secondary">Мониторинг</a></li>
+                <li>
+                    <a href="{% url 'dashboard:notifications' %}" class="nav-link px-2 text-secondary">
+                        Уведомления
+                        {% if unread_notifications_count > 0 %}
+                            <span class="badge badge-pill badge-danger">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'dashboard:strategies' %}" class="nav-link px-2 text-secondary">Стратегии</a></li>
+            {% endif %}
         </ul>
 
-        <div class="col-md-3 text-end">
+        <div class="text-right">
             {% if user.is_authenticated %}
-                <p>Привет, {{ user.email }}
-                <a href="{% url 'user:logout' %}" class="btn btn-primary">Выход</a>
-                </p>
+                <span class="mr-2 text-muted">{{ user.email }}</span>
+                <a href="{% url 'user:logout' %}" class="btn btn-outline-danger btn-sm">Выход</a>
             {% else %}
-                <a href="{% url 'user:auth' %}" class="btn btn-primary">Войти</a>
+                <a href="{% url 'user:auth' %}" class="btn btn-primary btn-sm">Войти</a>
+                <a href="{% url 'user:registration' %}" class="btn btn-outline-secondary btn-sm ml-1">Регистрация</a>
             {% endif %}
-
         </div>
     </header>
 </div>
 
 <main class="flex-shrink-0">
     <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
 
         {% block content %}
         {% endblock %}
-
-
     </div>
 </main>
 
 <footer class="footer mt-auto py-3 bg-light">
-    <div class="container">
-        <ul class="nav justify-content-center border-bottom pb-3 mb-3">
-            <li class="nav-item"><a href="{% url 'dashboard:index' %}" class="nav-link px-2 text-muted">Главная</a></li>
-        </ul>
-        <p class="text-center text-muted">Investing</p>
+    <div class="container text-center">
+        <span class="text-muted">Investing Demo &copy; 2026. Разработано с AI Coding Agent</span>
     </div>
 </footer>
-
 
 </body>
 </html>

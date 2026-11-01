@@ -283,3 +283,125 @@
 | **Д-13** | `dashboard/tasks.py` | Создание нового экземпляра `Client(TINKOFF_TOKEN)` на каждую акцию в цикле. | При N акциях в каталоге создается N раздельных gRPC-соединений (проблема сетевого N+1) вместо одного пакетного вызова `get_last_prices(figi=[...])`. |
 | **Д-14** | `config/celery.py` | Несоответствие расписания: ключ назван `"add-every-5-min"`, но интервал равен `10.0` сек. | Рассинхронизация конфигурации и названия задачи. |
 | **Д-15** | `config/settings.py` | Пустые значения `SECRET_KEY = ""` и `TINKOFF_TOKEN = ""`, включенный `DEBUG = True`, отсутствие поддержки `.env`. | Критический дефект безопасности и конфигурирования для рабочего окружения. |
+
+---
+
+## 7. Функциональные требования к новой функциональности (Задание №4)
+
+В рамках Задания №4 реализованы 4 взаимосвязанных функциональных модуля, расширяющих возможности платформы.
+
+### 7.1. Персональный мониторинг акций и уведомления
+
+#### ФТ-33. Персональный список наблюдения за акциями
+- **Описание**: Авторизованный пользователь имеет возможность формировать персональный список наблюдения за акциями (`WatchlistItem`), добавляя любые бумаги из доступного каталога.
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: модель [`WatchlistItem`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L83-L129).
+  - `dashboard/views.py`: представление [`WatchlistListView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L148-L190).
+  - `dashboard/templates/dashboard/watchlist_list.html`.
+
+#### ФТ-34. Установка целевых ценовых порогов и условий
+- **Описание**: Для каждого элемента списка наблюдения пользователь устанавливает целевую цену (`target_price`) и направление условия срабатывания (`condition`: `ABOVE` — текущая цена &ge; порога, `BELOW` — текущая цена &le; порога).
+- **Подтверждение в коде**:
+  - `dashboard/forms.py`: форма [`WatchlistForm`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/forms.py#L42-L62).
+  - `dashboard/api/v1/serializer.py`: [`WatchlistItemSerializer`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/api/v1/serializer.py#L45-L65).
+
+#### ФТ-35. Автоматическая проверка условий и генерация уведомлений
+- **Описание**: При каждом фоновом или ручном обновлении котировок система проверяет выполнение заданных пользователем условий. При достижении пороговой цены создается запись `PriceNotification` с точным описанием события, фактической и целевой ценой.
+- **Подтверждение в коде**:
+  - `dashboard/services/monitoring_service.py`: функция [`check_watchlist_alerts`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/monitoring_service.py#L10-L60).
+  - `dashboard/models.py`: модель [`PriceNotification`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L131-L165).
+
+#### ФТ-36. Защита от дублирования уведомлений
+- **Описание**: При срабатывании уведомления выставляется флаг `is_triggered=True`. Повторные уведомления на том же уровне не генерируются до тех пор, пока цена инструмента не вернется обратно за пределы целевого порога (что сбрасывает флаг `is_triggered` в `False`).
+- **Подтверждение в коде**:
+  - `dashboard/services/monitoring_service.py`: строки 35–58.
+  - `dashboard/test_task4.py`: тест `test_alert_triggered_above_condition`.
+
+#### ФТ-37. Журнал уведомлений и управление статусом прочтения
+- **Описание**: Пользователь имеет доступ к журналу полученных оповещений с индикатором количества непрочитанных событий в шапке сайта, возможностью постраничного просмотра и отметки отдельных либо всех уведомлений как прочитанных.
+- **Подтверждение в коде**:
+  - `dashboard/context_processors.py`: процессор [`notifications_processor`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/context_processors.py#L4-L14).
+  - `dashboard/views.py`: представления [`NotificationListView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L203-L213), [`NotificationMarkReadView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L215-L228).
+  - `dashboard/api/v1/views.py`: [`PriceNotificationViewSet.mark_all_read`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/api/v1/views.py#L76-L89).
+
+---
+
+### 7.2. Виртуальный инвестиционный портфель
+
+#### ФТ-38. Автоматическая инициализация виртуального инвестиционного портфеля
+- **Описание**: Для каждого зарегистрированного пользователя создается персональный инвестиционный портфель с настраиваемым стартовым балансом виртуальных средств (по умолчанию 100 000.00 USD).
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: модель [`Portfolio`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L171-L232).
+  - `dashboard/services/portfolio_service.py`: функция [`get_or_create_portfolio`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/portfolio_service.py#L15-L26).
+
+#### ФТ-39. Моделирование виртуальных сделок покупки акций
+- **Описание**: Пользователь может моделировать покупку ценных бумаг по текущей рыночной цене. Система проверяет достаточность свободных средств на балансе портфеля, списывает сумму сделки, увеличивает количество акций в позиции и пересчитывает средневзвешенную цену приобретения. Все изменения выполняются атомарно с пессимистической блокировкой записи портфеля (`select_for_update`).
+- **Подтверждение в коде**:
+  - `dashboard/services/portfolio_service.py`: функция [`buy_share`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/portfolio_service.py#L29-L91).
+  - `dashboard/models.py`: модель [`PortfolioPosition`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L234-L289).
+
+#### ФТ-40. Моделирование виртуальных сделок продажи и фиксация прибыли/убытка
+- **Описание**: Пользователь может продавать имеющиеся акции полностью или частично. Система контролирует достаточность объема в позиции, рассчитывает реализованную прибыль или убыток (`realized_pnl = (execution_price - avg_price) * quantity`), зачисляет выручку на свободный баланс и уменьшает позицию (вплоть до удаления при нулевом остатке).
+- **Подтверждение в коде**:
+  - `dashboard/services/portfolio_service.py`: функция [`sell_share`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/portfolio_service.py#L94-L159).
+
+#### ФТ-41. Расчет агрегированной стоимости портфеля и доходности
+- **Описание**: В режиме реального времени рассчитывается общая рыночная стоимость открытых позиций (`invested_value`), суммарная капитализация портфеля (`total_value = balance + invested_value`), а также абсолютный (`total_pnl`) и процентный (`total_pnl_percent`) финансовый результат относительно первоначального депозита.
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: вычисляемые свойства [`Portfolio.invested_value`, `total_value`, `total_pnl`, `total_pnl_percent`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L208-L232).
+  - `dashboard/templates/dashboard/portfolio.html`.
+
+#### ФТ-42. Ведение журнала операций (история сделок)
+- **Описание**: Каждая совершенная операция покупки или продажи сохраняется в неизменяемом журнале `PortfolioTransaction` с фиксацией времени, инструмента, объема, цены исполнения, итоговой суммы и реализованного PnL.
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: модель [`PortfolioTransaction`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L290-L345).
+  - `dashboard/views.py`: [`PortfolioDashboardView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L236-L263).
+
+---
+
+### 7.3. История изменения рыночных цен и динамика
+
+#### ФТ-43. Автоматическое сохранение рыночных котировок в базу данных
+- **Описание**: При каждом периодическом обновлении котировок фоновой задачей Celery `update_last_price` текущая цена акции автоматически архивируется в таблицу `PriceHistory`. Предусмотрена дедупликация идентичных значений в пределах короткого интервала времени (1 минута).
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: модель [`PriceHistory`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L51-L77).
+  - `dashboard/services/history_service.py`: функция [`record_price`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/history_service.py#L16-L42).
+  - `dashboard/tasks.py`: вызов `record_price` в [`update_last_price`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/tasks.py#L58-L60).
+
+#### ФТ-44. Выбор временных интервалов выборки цен
+- **Описание**: Пользователь и API-клиенты могут запрашивать выборку исторических котировок по стандартным периодам: 1 день (`1D`), 1 неделя (`1W`), 1 месяц (`1M`), 1 год (`1Y`) или за всё время (`ALL`).
+- **Подтверждение в коде**:
+  - `dashboard/services/history_service.py`: функции [`_get_period_cutoff`, `get_price_history`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/history_service.py#L44-L65).
+
+#### ФТ-45. Расчет аналитических показателей динамики котировок
+- **Описание**: На основе накопленной истории автоматически рассчитываются: стартовая и финишная цена за интервал, минимальный и максимальный экстремумы, абсолютное изменение стоимости и процентный прирост/просадка.
+- **Подтверждение в коде**:
+  - `dashboard/services/history_service.py`: функция [`calculate_price_dynamics`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/history_service.py#L67-L113).
+  - `dashboard/api/v1/views.py`: действие [`ShareViewSet.dynamics`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/api/v1/views.py#L50-L56).
+
+#### ФТ-46. Построение интерактивных графиков на основе накопленной истории
+- **Описание**: Приложение динамически генерирует интерактивные линейные графики изменения цен (Plotly) с цветовой индикацией тренда за выбранный период и подсказками в точках фиксации данных.
+- **Подтверждение в коде**:
+  - `dashboard/services/history_service.py`: функция [`generate_history_chart`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/history_service.py#L115-L156).
+  - `dashboard/views.py`: представления [`ShareDetailView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L64-L115), [`SharePriceHistoryView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L309-L332).
+
+---
+
+### 7.4. Симулятор инвестиционных стратегий
+
+#### ФТ-47. Создание и настройка торговых стратегий
+- **Описание**: Пользователь может конструировать персональные инвестиционные стратегии двух типов:
+  1. `THRESHOLD_BUY_SELL` — пороговая стратегия (покупка при цене &le; $P_1$, продажа при цене &ge; $P_2$).
+  2. `DIP_BUY_PROFIT_SELL` — процентная стратегия (усреднение при падении на $X$\%, фиксация прибыли при росте на $Y$\%).
+  Форма и сериализатор валидируют логическую корректность порогов ($P_{buy} < P_{sell}$).
+- **Подтверждение в коде**:
+  - `dashboard/models.py`: модель [`TradingStrategy`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L351-L414).
+  - `dashboard/forms.py`: форма [`TradingStrategyForm`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/forms.py#L65-L125).
+
+#### ФТ-48. Автоматическое исполнение симуляции, протоколирование и оценка эффективности
+- **Описание**: Система автоматически оценивает рыночные условия для активных стратегий как при поступлении новых котировок, так и по ручному запросу пользователя («Запустить шаг симуляции»). При совпадении условий автоматически инициируется виртуальная сделка покупки/продажи в портфеле пользователя, факт сделки или пропуска логируется в `StrategyExecutionLog`, а на странице стратегии отображаются ключевые метрики эффективности: суммарный реализованный PnL, количество сделок и текущая позиция.
+- **Подтверждение в коде**:
+  - `dashboard/services/strategy_service.py`: функции [`execute_strategy`, `simulate_active_strategies`, `get_strategy_performance`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/services/strategy_service.py#L17-L245).
+  - `dashboard/models.py`: модель [`StrategyExecutionLog`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/models.py#L416-L449).
+  - `dashboard/views.py`: представления [`StrategyListView`, `StrategyDetailView`, `StrategyRunView`, `StrategyToggleActiveView`](file:///Users/lendwye/documents/antigravity/aidd-topic-03-homework/dashboard/views.py#L340-L442).
+

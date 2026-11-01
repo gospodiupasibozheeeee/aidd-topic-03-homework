@@ -33,3 +33,9 @@ app.logs
 .coverage
 htmlcov/
 staticfiles/
+
+# OS and Git worktrees
+.DS_Store
+.*-worktree/
+*-worktree/
+

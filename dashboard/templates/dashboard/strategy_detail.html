@@ -1,0 +1,159 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+<title>Стратегия: {{ strategy.name }}</title>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2>
+            <i class="fa fa-cogs text-primary"></i> {{ strategy.name }}
+            {% if strategy.is_active %}
+                <span class="badge badge-success">Активна</span>
+            {% else %}
+                <span class="badge badge-secondary">Пауза</span>
+            {% endif %}
+        </h2>
+        <span class="text-muted">Инструмент: <strong>{{ strategy.share.ticker }}</strong> ({{ strategy.share.name }}) | Портфель: {{ strategy.portfolio.name }}</span>
+    </div>
+    <div>
+        <form method="post" action="{% url 'dashboard:strategy_run' strategy.id %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa fa-bolt"></i> Запустить шаг симуляции
+            </button>
+        </form>
+        <form method="post" action="{% url 'dashboard:strategy_toggle' strategy.id %}" class="d-inline ml-1">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning btn-sm">
+                <i class="fa {% if strategy.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                {% if strategy.is_active %}Приостановить{% else %}Возобновить{% endif %}
+            </button>
+        </form>
+        <a href="{% url 'dashboard:strategies' %}" class="btn btn-outline-secondary btn-sm ml-1">
+            <i class="fa fa-arrow-left"></i> Ко всем стратегиям
+        </a>
+    </div>
+</div>
+
+<!-- Метрики эффективности стратегии -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-2">
+        <div class="card bg-light shadow-sm text-center p-3 h-100">
+            <h6 class="text-muted text-uppercase small">Реализованный PnL</h6>
+            <h3 class="font-weight-bold mb-0 {% if performance.realized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                {% if performance.realized_pnl >= 0 %}+{% endif %}{{ performance.realized_pnl }} {{ strategy.share.currency }}
+            </h3>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-light shadow-sm text-center p-3 h-100">
+            <h6 class="text-muted text-uppercase small">Всего сделок</h6>
+            <h3 class="font-weight-bold mb-0 text-primary">{{ performance.total_trades }}</h3>
+            <small class="text-muted">Покупок: {{ performance.buy_trades }} | Продаж: {{ performance.sell_trades }}</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-light shadow-sm text-center p-3 h-100">
+            <h6 class="text-muted text-uppercase small">Открытая позиция</h6>
+            <h3 class="font-weight-bold mb-0">{{ performance.current_position_quantity }} шт.</h3>
+            <small class="text-muted">Оценка: {{ performance.current_position_value|floatformat:2 }} {{ strategy.share.currency }}</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-light shadow-sm text-center p-3 h-100">
+            <h6 class="text-muted text-uppercase small">Текущая цена акции</h6>
+            <h3 class="font-weight-bold mb-0 text-dark">{{ strategy.share.last_price|default:"—" }} {{ strategy.share.currency }}</h3>
+            <small class="text-muted">Buy: &le; {{ strategy.buy_threshold }} | Sell: &ge; {{ strategy.sell_threshold }}</small>
+        </div>
+    </div>
+</div>
+
+<!-- Настройки стратегии -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="fa fa-sliders"></i> Параметры торговой стратегии</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Тип алгоритма:</strong> {{ strategy.get_strategy_type_display }}
+            </div>
+            <div class="col-md-4">
+                <strong>Условие покупки:</strong> Цена &le; {{ strategy.buy_threshold }}
+            </div>
+            <div class="col-md-4">
+                <strong>Условие продажи:</strong> Цена &ge; {{ strategy.sell_threshold }}
+            </div>
+            <div class="col-md-4 mt-2">
+                <strong>Объем сделки:</strong> {{ strategy.trade_quantity }} шт. за операцию
+            </div>
+            <div class="col-md-4 mt-2">
+                <strong>Дата создания:</strong> {{ strategy.created_at|date:"d.m.Y H:i:s" }}
+            </div>
+            <div class="col-md-4 mt-2">
+                <form method="post" action="{% url 'dashboard:strategy_delete' strategy.id %}" onsubmit="return confirm('Вы действительно хотите удалить эту стратегию?');" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fa fa-trash"></i> Удалить стратегию
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Журнал симулятора (Execution Log) -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="fa fa-terminal"></i> Журнал выполнения стратегии</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Действие</th>
+                            <th>Цена</th>
+                            <th>Кол-во</th>
+                            <th>Сообщение / Результат проверки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            <tr>
+                                <td class="small text-muted">{{ log.executed_at|date:"d.m.Y H:i:s" }}</td>
+                                <td>
+                                    {% if log.action == 'BUY' %}
+                                        <span class="badge badge-success"><i class="fa fa-arrow-down"></i> Покупка</span>
+                                    {% elif log.action == 'SELL' %}
+                                        <span class="badge badge-danger"><i class="fa fa-arrow-up"></i> Продажа</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary"><i class="fa fa-minus"></i> Пропуск</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log.price %}
+                                        {{ log.price }} {{ strategy.share.currency }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.quantity|default:"—" }}</td>
+                                <td>{{ log.message }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-4 text-center text-muted">
+                <p class="mb-0">Журнал пуст. Нажмите «Запустить шаг симуляции» или дождитесь автоматического обновления котировок.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

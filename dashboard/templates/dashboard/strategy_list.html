@@ -1,0 +1,182 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+<title>Симулятор инвестиционных стратегий</title>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fa fa-cogs text-primary"></i> Симулятор инвестиционных стратегий</h2>
+    <a href="{% url 'dashboard:portfolio' %}" class="btn btn-outline-success">
+        <i class="fa fa-briefcase"></i> Перейти в портфель
+    </a>
+</div>
+
+<div class="row">
+    <!-- Форма создания стратегии -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fa fa-plus-circle"></i> Новая торговая стратегия</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'dashboard:strategies' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}"><strong>Название стратегии:</strong></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.share.id_for_label }}"><strong>Инструмент:</strong></label>
+                        {{ form.share }}
+                        {% if form.share.errors %}
+                            <div class="text-danger small">{{ form.share.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.strategy_type.id_for_label }}"><strong>Тип стратегии:</strong></label>
+                        {{ form.strategy_type }}
+                        {% if form.strategy_type.errors %}
+                            <div class="text-danger small">{{ form.strategy_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.buy_threshold.id_for_label }}"><strong>Порог покупки (цена или %):</strong></label>
+                        {{ form.buy_threshold }}
+                        <small class="form-text text-muted">Покупка при цене &le; порогу (или просадке в %).</small>
+                        {% if form.buy_threshold.errors %}
+                            <div class="text-danger small">{{ form.buy_threshold.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.sell_threshold.id_for_label }}"><strong>Порог продажи (цена или %):</strong></label>
+                        {{ form.sell_threshold }}
+                        <small class="form-text text-muted">Продажа при цене &ge; порогу (или прибыли в %).</small>
+                        {% if form.sell_threshold.errors %}
+                            <div class="text-danger small">{{ form.sell_threshold.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.trade_quantity.id_for_label }}"><strong>Объем сделки (акций):</strong></label>
+                        {{ form.trade_quantity }}
+                        {% if form.trade_quantity.errors %}
+                            <div class="text-danger small">{{ form.trade_quantity.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            Активировать стратегию сразу после создания
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fa fa-save"></i> Создать стратегию
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список созданных стратегий -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0"><i class="fa fa-list"></i> Ваши инвестиционные стратегии</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if strategies %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Стратегия</th>
+                                    <th>Инструмент</th>
+                                    <th>Пороги</th>
+                                    <th>Сделок</th>
+                                    <th>PnL</th>
+                                    <th>Статус</th>
+                                    <th>Управление</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in strategies %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'dashboard:strategy_detail' s.id %}" class="font-weight-bold">
+                                                {{ s.name }}
+                                            </a>
+                                            <div class="small text-muted">{{ s.get_strategy_type_display }}</div>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'dashboard:detail' s.share.id %}">
+                                                {{ s.share.ticker }}
+                                            </a>
+                                            <div class="small text-muted">{{ s.share.last_price|default:"—" }} {{ s.share.currency }}</div>
+                                        </td>
+                                        <td class="small">
+                                            <div>Buy: <strong>&le; {{ s.buy_threshold }}</strong></div>
+                                            <div>Sell: <strong>&ge; {{ s.sell_threshold }}</strong></div>
+                                            <div class="text-muted">Объем: {{ s.trade_quantity }} шт.</div>
+                                        </td>
+                                        <td class="text-center font-weight-bold">{{ s.total_trades }}</td>
+                                        <td class="{% if s.total_pnl >= 0 %}text-success{% else %}text-danger{% endif %} font-weight-bold">
+                                            {% if s.total_pnl >= 0 %}+{% endif %}{{ s.total_pnl }} {{ s.share.currency }}
+                                        </td>
+                                        <td>
+                                            {% if s.is_active %}
+                                                <span class="badge badge-success"><i class="fa fa-play"></i> Активна</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary"><i class="fa fa-pause"></i> Пауза</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <form method="post" action="{% url 'dashboard:strategy_run' s.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm" title="Симулировать сейчас">
+                                                        <i class="fa fa-bolt"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="post" action="{% url 'dashboard:strategy_toggle' s.id %}" class="d-inline ml-1">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Вкл / Пауза">
+                                                        <i class="fa {% if s.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                                    </button>
+                                                </form>
+                                                <a href="{% url 'dashboard:strategy_detail' s.id %}" class="btn btn-outline-info btn-sm ml-1" title="Детали и лог">
+                                                    <i class="fa fa-info-circle"></i>
+                                                </a>
+                                                <form method="post" action="{% url 'dashboard:strategy_delete' s.id %}" onsubmit="return confirm('Удалить стратегию?');" class="d-inline ml-1">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Удалить">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="fa fa-lightbulb-o fa-3x mb-3 text-secondary"></i>
+                        <p class="mb-0">У вас пока нет созданных стратегий. Заполните форму слева для моделирования автоматической торговли!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

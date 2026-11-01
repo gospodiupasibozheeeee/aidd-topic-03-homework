@@ -1,0 +1,127 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+<title>История цен {{ share.ticker }} ({{ share.name }})</title>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2>
+            <a href="{% url 'dashboard:detail' share.id %}">{{ share.ticker }}</a>: {{ share.name }}
+            <span class="badge badge-secondary ml-2">{{ share.currency|upper }}</span>
+        </h2>
+        <span class="text-muted">ISIN: {{ share.isin }} | FIGI: {{ share.figi }}</span>
+    </div>
+    <div>
+        <a href="{% url 'dashboard:detail' share.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-arrow-left"></i> В карточку акции
+        </a>
+    </div>
+</div>
+
+<!-- Выбор периода -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold"><i class="fa fa-calendar"></i> Период анализа:</span>
+        <div class="btn-group" role="group">
+            <a href="?period=1D" class="btn btn-sm {% if period == '1D' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 день</a>
+            <a href="?period=1W" class="btn btn-sm {% if period == '1W' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 неделя</a>
+            <a href="?period=1M" class="btn btn-sm {% if period == '1M' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 месяц</a>
+            <a href="?period=1Y" class="btn btn-sm {% if period == '1Y' %}btn-primary{% else %}btn-outline-primary{% endif %}">1 год</a>
+            <a href="?period=ALL" class="btn btn-sm {% if period == 'ALL' %}btn-primary{% else %}btn-outline-primary{% endif %}">Все время</a>
+        </div>
+    </div>
+</div>
+
+<!-- Блок динамики цен -->
+<div class="row mb-4">
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Старт периода</small>
+            <div class="h5 font-weight-bold mb-0">{{ dynamics.start_price }} {{ share.currency }}</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Конец периода</small>
+            <div class="h5 font-weight-bold mb-0">{{ dynamics.end_price }} {{ share.currency }}</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Минимум</small>
+            <div class="h5 text-info font-weight-bold mb-0">{{ dynamics.min_price }} {{ share.currency }}</div>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Максимум</small>
+            <div class="h5 text-primary font-weight-bold mb-0">{{ dynamics.max_price }} {{ share.currency }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Абсолютное изменение</small>
+            <div class="h5 font-weight-bold mb-0 {% if dynamics.is_growth %}text-success{% else %}text-danger{% endif %}">
+                {% if dynamics.is_growth %}+{% endif %}{{ dynamics.absolute_change }} {{ share.currency }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-2">
+        <div class="card bg-light text-center p-2 shadow-sm h-100">
+            <small class="text-muted">Процентное изменение</small>
+            <div class="h5 font-weight-bold mb-0 {% if dynamics.is_growth %}text-success{% else %}text-danger{% endif %}">
+                {% if dynamics.is_growth %}+{% endif %}{{ dynamics.percentage_change }}%
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Интерактивный график -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0"><i class="fa fa-line-chart text-success"></i> Динамика котировок</h5>
+    </div>
+    <div class="card-body p-2">
+        {% autoescape off %}
+            {{ chart_div }}
+        {% endautoescape %}
+    </div>
+</div>
+
+<!-- Таблица срезов котировок -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0"><i class="fa fa-table"></i> Зафиксированные срезы цен ({{ dynamics.data_points }} записей)</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if history_records %}
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Время фиксации</th>
+                            <th>Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history_records %}
+                            <tr>
+                                <td class="text-muted">{{ forloop.counter }}</td>
+                                <td>{{ item.recorded_at|date:"d.m.Y H:i:s" }}</td>
+                                <td class="font-weight-bold">{{ item.price }} {{ share.currency }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-4 text-center text-muted">
+                Данные в базе пока не накоплены за выбранный период.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

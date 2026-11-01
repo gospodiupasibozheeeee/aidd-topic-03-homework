@@ -1,0 +1,103 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+<title>Уведомления о ценовых уровнях</title>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fa fa-envelope text-info"></i> Уведомления о ценовых уровнях</h2>
+    <div>
+        <form method="post" action="{% url 'dashboard:notifications_read_all' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-check-square-o"></i> Отметить все как прочитанные
+            </button>
+        </form>
+        <a href="{% url 'dashboard:watchlist' %}" class="btn btn-primary btn-sm ml-2">
+            <i class="fa fa-sliders"></i> Настройка мониторинга
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if notifications %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Инструмент</th>
+                            <th>Целевой уровень</th>
+                            <th>Фактическая цена</th>
+                            <th>Сообщение</th>
+                            <th>Статус</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notifications %}
+                            <tr class="{% if not n.is_read %}table-warning font-weight-bold{% endif %}">
+                                <td class="text-nowrap small text-muted">
+                                    {{ n.created_at|date:"d.m.Y H:i:s" }}
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard:detail' n.share.id %}">
+                                        {{ n.share.ticker }}
+                                    </a>
+                                </td>
+                                <td>{{ n.target_price }} {{ n.share.currency }}</td>
+                                <td class="text-primary">{{ n.actual_price }} {{ n.share.currency }}</td>
+                                <td>{{ n.message }}</td>
+                                <td>
+                                    {% if n.is_read %}
+                                        <span class="badge badge-secondary">Прочитано</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Новое</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not n.is_read %}
+                                        <form method="post" action="{% url 'dashboard:notification_read' n.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Отметить прочитанным">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+                <div class="p-3 border-top">
+                    <ul class="pagination mb-0 justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                        {% endif %}
+                        {% for num in paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="p-5 text-center text-muted">
+                <i class="fa fa-bell-slash fa-3x mb-3 text-secondary"></i>
+                <p class="mb-0">У вас пока нет уведомлений. Они появятся здесь при достижении котировками заданных целевых уровней.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
