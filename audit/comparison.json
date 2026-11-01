@@ -1,0 +1,472 @@
+{
+  "evaluated_at": "2026-11-01T19:54:26.029691+00:00",
+  "python": "3.14.6",
+  "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "database": "SQLite",
+  "source": "pinned git archive exports",
+  "market": "local fixture only; no real market token",
+  "branches": {
+    "codex": {
+      "commit": "68ad48e",
+      "steps": {
+        "install": {
+          "exit_code": 0,
+          "wall_seconds": 0.102
+        },
+        "coverage-tool": {
+          "exit_code": 0,
+          "wall_seconds": 0.012
+        },
+        "versions": {
+          "exit_code": 0,
+          "wall_seconds": 0.064
+        },
+        "tests": {
+          "exit_code": 0,
+          "wall_seconds": 2.233
+        },
+        "coverage-json": {
+          "exit_code": 0,
+          "wall_seconds": 0.142
+        },
+        "check": {
+          "exit_code": 0,
+          "wall_seconds": 0.376
+        },
+        "migration-state": {
+          "exit_code": 0,
+          "wall_seconds": 0.378
+        },
+        "migrate": {
+          "exit_code": 0,
+          "wall_seconds": 0.578
+        },
+        "probes": {
+          "exit_code": 0,
+          "wall_seconds": 0.935
+        }
+      },
+      "installed": {
+        "Django": "5.2.18",
+        "amqp": "5.4.1",
+        "asgiref": "3.13.0",
+        "billiard": "4.3.1",
+        "celery": "5.6.3",
+        "certifi": "2026.10.23",
+        "charset-normalizer": "3.5.2",
+        "click": "8.5.0",
+        "click-didyoumean": "0.3.1",
+        "click-plugins": "1.1.1.2",
+        "click-repl": "0.4.1",
+        "coverage": "7.17.0",
+        "crispy-bootstrap3": "2024.1",
+        "django-crispy-forms": "2.7",
+        "django-filter": "26.2",
+        "djangorestframework": "3.18.3",
+        "idna": "3.20",
+        "kombu": "5.6.2",
+        "narwhals": "2.28.0",
+        "packaging": "26.3",
+        "pip": "26.1.2",
+        "plotly": "6.9.0",
+        "prompt_toolkit": "3.0.53",
+        "psycopg": "3.3.6",
+        "psycopg-binary": "3.3.6",
+        "python-dateutil": "4.0.0",
+        "python-dotenv": "1.2.4",
+        "redis": "6.4.0",
+        "requests": "2.34.2",
+        "sqlparse": "0.6.1",
+        "typing_extensions": "4.16.0",
+        "tzdata": "2026.6",
+        "tzlocal": "5.4.5",
+        "urllib3": "2.8.0",
+        "vine": "5.1.0",
+        "wcwidth": "0.9.4"
+      },
+      "tests": {
+        "run": 104,
+        "reported_seconds": 1.123,
+        "skipped": 4,
+        "ok": true
+      },
+      "coverage": {
+        "covered_lines": 1177,
+        "num_statements": 1237,
+        "percent_covered": 95.14955537590946,
+        "percent_covered_display": "95",
+        "missing_lines": 60,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.14955537590946,
+        "percent_statements_covered_display": "95"
+      },
+      "probes": {
+        "notification_events": {
+          "same_event_twice": 1,
+          "after_recrossing": 1
+        },
+        "price_precision": {
+          "input": "100.123456789",
+          "stored": "100.123456789"
+        },
+        "search_contract": {
+          "regex_status": 200,
+          "regex_count": 1,
+          "invalid_regex_status": 400
+        },
+        "malformed_quantity": {
+          "path": "/api/v1/portfolios/1/trades/",
+          "status": 400,
+          "api_available": true
+        },
+        "currency_guard": {
+          "accepted": false,
+          "wallet_currency": "usd",
+          "instrument_currency": "rub",
+          "trades": 0,
+          "cash_after": "1000.000000000"
+        },
+        "missing_quote_valuation": {
+          "market_value": null,
+          "unrealized_pnl": null
+        },
+        "share_deletion": {
+          "status": 409,
+          "journal_before": 1,
+          "journal_after": 1
+        },
+        "foreign_portfolio": {
+          "owner_status": 200,
+          "status": 404,
+          "interface": "api"
+        },
+        "history_identity": {
+          "equal_prices_distinct_timestamps": 2,
+          "rows_after_conflicting_same_timestamp": 2
+        },
+        "strategy_retry": {
+          "mode": "same quote twice",
+          "trades": 1,
+          "cash": "900.000000000",
+          "quantity": 1
+        },
+        "market_contract": {
+          "returned_instruments": 1,
+          "http_calls": [
+            "/rest/tinkoff.public.invest.api.contract.v1.InstrumentsService/Shares"
+          ]
+        }
+      },
+      "http": {
+        "/": 200,
+        "/api/v1/shares/": 200
+      }
+    },
+    "antigravity": {
+      "commit": "6ef049a",
+      "steps": {
+        "install": {
+          "exit_code": 0,
+          "wall_seconds": 0.103
+        },
+        "coverage-tool": {
+          "exit_code": 0,
+          "wall_seconds": 0.011
+        },
+        "versions": {
+          "exit_code": 0,
+          "wall_seconds": 0.065
+        },
+        "tests": {
+          "exit_code": 0,
+          "wall_seconds": 6.665
+        },
+        "coverage-json": {
+          "exit_code": 0,
+          "wall_seconds": 0.151
+        },
+        "check": {
+          "exit_code": 0,
+          "wall_seconds": 0.374
+        },
+        "migration-state": {
+          "exit_code": 0,
+          "wall_seconds": 0.388
+        },
+        "migrate": {
+          "exit_code": 0,
+          "wall_seconds": 0.562
+        },
+        "probes": {
+          "exit_code": 0,
+          "wall_seconds": 0.949
+        }
+      },
+      "installed": {
+        "Django": "5.2.18",
+        "amqp": "5.4.1",
+        "asgiref": "3.13.0",
+        "billiard": "4.3.1",
+        "celery": "5.6.3",
+        "certifi": "2026.10.23",
+        "charset-normalizer": "3.5.2",
+        "click": "8.5.0",
+        "click-didyoumean": "0.3.1",
+        "click-plugins": "1.1.1.2",
+        "click-repl": "0.4.1",
+        "coverage": "7.17.0",
+        "crispy-bootstrap3": "2024.1",
+        "django-crispy-forms": "2.7",
+        "django-filter": "26.2",
+        "djangorestframework": "3.18.3",
+        "idna": "3.20",
+        "kombu": "5.6.2",
+        "narwhals": "2.28.0",
+        "packaging": "26.3",
+        "pip": "26.1.2",
+        "plotly": "7.1.0",
+        "prompt_toolkit": "3.0.53",
+        "psycopg": "3.3.6",
+        "psycopg-binary": "3.3.6",
+        "python-dateutil": "4.0.0",
+        "python-dotenv": "1.2.4",
+        "redis": "8.1.0",
+        "requests": "2.34.2",
+        "sqlparse": "0.6.1",
+        "typing_extensions": "4.16.0",
+        "tzdata": "2026.6",
+        "tzlocal": "5.4.5",
+        "urllib3": "2.8.0",
+        "vine": "5.1.0",
+        "wcwidth": "0.9.4"
+      },
+      "tests": {
+        "run": 49,
+        "reported_seconds": 5.721,
+        "skipped": 0,
+        "ok": true
+      },
+      "coverage": {
+        "covered_lines": 1070,
+        "num_statements": 1312,
+        "percent_covered": 81.5548780487805,
+        "percent_covered_display": "82",
+        "missing_lines": 242,
+        "excluded_lines": 0,
+        "percent_statements_covered": 81.5548780487805,
+        "percent_statements_covered_display": "82"
+      },
+      "probes": {
+        "notification_events": {
+          "same_event_twice": 1,
+          "after_recrossing": 2
+        },
+        "price_precision": {
+          "input": "100.123456789",
+          "stored": "100.12"
+        },
+        "search_contract": {
+          "regex_status": 200,
+          "regex_count": 1,
+          "invalid_regex_status": 500
+        },
+        "malformed_quantity": {
+          "path": "/api/v1/portfolio/buy/",
+          "status": 500,
+          "api_available": true
+        },
+        "currency_guard": {
+          "accepted": true,
+          "wallet_currency": "usd",
+          "instrument_currency": "rub",
+          "trades": 1,
+          "cash_after": "900.00"
+        },
+        "missing_quote_valuation": {
+          "market_value": "100.00",
+          "unrealized_pnl": "0.00"
+        },
+        "share_deletion": {
+          "status": 204,
+          "journal_before": 1,
+          "journal_after": 0
+        },
+        "foreign_portfolio": {
+          "owner_status": 200,
+          "status": 404,
+          "interface": "api"
+        },
+        "history_identity": {
+          "equal_prices_distinct_timestamps": 1,
+          "rows_after_conflicting_same_timestamp": 2
+        },
+        "strategy_retry": {
+          "mode": "same signal twice",
+          "trades": 2,
+          "cash": "800.00",
+          "quantity": 2
+        },
+        "market_contract": {
+          "returned_instruments": 0,
+          "http_calls": [
+            "/rest/tinkoff.public.invest.api.v1.InstrumentsService/Shares"
+          ]
+        }
+      },
+      "http": {
+        "/": 200,
+        "/api/v1/shares/": 200
+      }
+    },
+    "deepseek": {
+      "commit": "0307b44",
+      "steps": {
+        "install": {
+          "exit_code": 0,
+          "wall_seconds": 0.102
+        },
+        "coverage-tool": {
+          "exit_code": 0,
+          "wall_seconds": 0.011
+        },
+        "versions": {
+          "exit_code": 0,
+          "wall_seconds": 0.063
+        },
+        "tests": {
+          "exit_code": 0,
+          "wall_seconds": 7.541
+        },
+        "coverage-json": {
+          "exit_code": 0,
+          "wall_seconds": 0.204
+        },
+        "check": {
+          "exit_code": 0,
+          "wall_seconds": 0.344
+        },
+        "migration-state": {
+          "exit_code": 0,
+          "wall_seconds": 0.313
+        },
+        "migrate": {
+          "exit_code": 0,
+          "wall_seconds": 0.465
+        },
+        "probes": {
+          "exit_code": 0,
+          "wall_seconds": 0.374
+        }
+      },
+      "installed": {
+        "Django": "5.2.18",
+        "amqp": "5.4.1",
+        "asgiref": "3.13.0",
+        "billiard": "4.3.1",
+        "celery": "5.6.3",
+        "click": "8.5.0",
+        "click-didyoumean": "0.3.1",
+        "click-plugins": "1.1.1.2",
+        "click-repl": "0.4.1",
+        "coverage": "7.17.0",
+        "crispy-bootstrap5": "2026.9",
+        "django-crispy-forms": "2.7",
+        "django-filter": "26.2",
+        "djangorestframework": "3.18.3",
+        "kombu": "5.6.2",
+        "narwhals": "2.28.0",
+        "packaging": "26.3",
+        "pip": "26.1.2",
+        "plotly": "6.9.0",
+        "prompt_toolkit": "3.0.53",
+        "psycopg": "3.3.6",
+        "psycopg-binary": "3.3.6",
+        "python-dateutil": "4.0.0",
+        "python-dotenv": "1.2.4",
+        "redis": "6.4.0",
+        "sqlparse": "0.6.1",
+        "typing_extensions": "4.16.0",
+        "tzdata": "2026.6",
+        "tzlocal": "5.4.5",
+        "vine": "5.1.0",
+        "wcwidth": "0.9.4"
+      },
+      "tests": {
+        "run": 63,
+        "reported_seconds": 6.575,
+        "skipped": 0,
+        "ok": true
+      },
+      "coverage": {
+        "covered_lines": 1151,
+        "num_statements": 1343,
+        "percent_covered": 85.7036485480268,
+        "percent_covered_display": "86",
+        "missing_lines": 192,
+        "excluded_lines": 7,
+        "percent_statements_covered": 85.7036485480268,
+        "percent_statements_covered_display": "86"
+      },
+      "probes": {
+        "notification_events": {
+          "same_event_twice": 1,
+          "after_recrossing": 2
+        },
+        "price_precision": {
+          "input": "100.123456789",
+          "stored": "100.123456789"
+        },
+        "search_contract": {
+          "regex_status": 200,
+          "regex_count": 0,
+          "invalid_regex_status": 200
+        },
+        "malformed_quantity": {
+          "path": "/api/v1/portfolios/buy/",
+          "status": 404,
+          "api_available": false
+        },
+        "currency_guard": {
+          "accepted": true,
+          "wallet_currency": null,
+          "instrument_currency": "rub",
+          "trades": 1,
+          "cash_after": null
+        },
+        "missing_quote_valuation": {
+          "market_value": "0",
+          "unrealized_pnl": "-100.00000000000000000"
+        },
+        "share_deletion": {
+          "status": 204,
+          "journal_before": 1,
+          "journal_after": 0
+        },
+        "foreign_portfolio": {
+          "owner_status": 200,
+          "status": 404,
+          "interface": "html"
+        },
+        "history_identity": {
+          "equal_prices_distinct_timestamps": 2,
+          "rows_after_conflicting_same_timestamp": 2
+        },
+        "strategy_retry": {
+          "mode": "two stale ORM instances (concurrency emulation)",
+          "trades": 2,
+          "cash": "900.00",
+          "quantity": "1.00000000",
+          "quantity_in_journal": "2.00000000"
+        },
+        "market_contract": {
+          "sdk_available": false,
+          "http_calls": []
+        }
+      },
+      "http": {
+        "/": 200,
+        "/api/v1/shares/": 200
+      }
+    }
+  }
+}

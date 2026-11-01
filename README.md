@@ -157,3 +157,8 @@ uv pip compile --upgrade --universal --python-version 3.12 requirements-dev.in -
 
 Итоги модернизации и проверок: [AUDIT.md](AUDIT.md). Описание исходной версии:
 [ANALYSIS.md](ANALYSIS.md), [REQUIREMENTS.md](REQUIREMENTS.md).
+
+Задание №5: [сравнение трёх реализаций](COMPARISON.md),
+[отчёт о работе с агентами](REPORT.md), [первичные результаты](audit/comparison.json).
+Повторить проверку изолированных Git-снимков можно командой
+`python scripts/compare_branches.py`; нужен доступ к PyPI и коммиты сравниваемых веток.
