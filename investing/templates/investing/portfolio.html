@@ -1,0 +1,22 @@
+{% extends "dashboard/base.html" %}
+{% block title %}<title>{{ portfolio.name }}</title>{% endblock %}
+{% block content %}
+<a href="{% url 'investing:workspace' %}">← Личный кабинет</a><h1 class="my-3">{{ portfolio.name }} <small class="text-muted">{{ portfolio.currency|upper }}</small></h1>
+<p>Начальный капитал: {{ portfolio.initial_cash|floatformat:2 }}. Операции виртуальные, без комиссий и конвертации валют.</p>
+<div class="row g-3 mb-4">
+<div class="col-md-3"><div class="card card-body"><span>Свободные деньги</span><strong>{{ summary.cash|floatformat:2 }}</strong></div></div>
+<div class="col-md-3"><div class="card card-body"><span>Общая стоимость</span><strong>{{ summary.total_value|floatformat:2|default:"—" }}</strong></div></div>
+<div class="col-md-3"><div class="card card-body"><span>Общий результат</span><strong>{{ summary.total_pnl|floatformat:2|default:"—" }}</strong></div></div>
+<div class="col-md-3"><div class="card card-body"><span>Доходность</span><strong>{{ summary.return_percent|floatformat:2|default:"—" }} %</strong></div></div>
+</div>
+{% if not summary.complete %}<p role="status" class="alert alert-warning">Для полной оценки не хватает котировки в валюте портфеля. Неизвестная стоимость обозначена «—».</p>{% endif %}
+<p>Реализованный результат: {{ summary.realized_pnl|floatformat:2 }} · Нереализованный: {{ summary.unrealized_pnl|floatformat:2|default:"—" }}</p>
+<a class="btn btn-primary mb-3" href="{% url 'investing:trade' portfolio.pk %}">Совершить виртуальную сделку</a>
+<h2 class="h4">Позиции</h2><div class="table-responsive"><table class="table"><thead><tr><th>Акция</th><th>Количество</th><th>Средняя цена покупки</th><th>Текущая стоимость</th><th>Нереализованный результат</th></tr></thead><tbody>
+{% for row in summary.holdings %}<tr><td><a href="{% url 'dashboard:detail' row.share.pk %}">{{ row.share.ticker }}</a></td><td>{{ row.quantity }}</td><td>{{ row.average_price|floatformat:"-9" }}</td><td>{{ row.market_value|floatformat:2|default:"—" }}</td><td>{{ row.unrealized_pnl|floatformat:2|default:"—" }}</td></tr>{% empty %}<tr><td colspan="5">Открытых позиций нет.</td></tr>{% endfor %}</tbody></table></div>
+<h2 class="h4 mt-4">История сделок</h2><div class="table-responsive"><table class="table"><thead><tr><th>Время (UTC)</th><th>Операция</th><th>Акция</th><th>Количество</th><th>Цена</th><th>Сумма</th><th>Результат продажи</th><th>Источник</th></tr></thead><tbody>
+{% for item in page_obj %}<tr><td>{{ item.created_at|date:"d.m.Y H:i:s" }}</td><td>{{ item.get_side_display }}</td><td>{{ item.share.ticker }}</td><td>{{ item.quantity }}</td><td>{{ item.price|floatformat:"-9" }}</td><td>{{ item.amount|floatformat:2 }}</td><td>{{ item.realized_pnl|floatformat:2 }}</td><td>{% if item.automated %}Стратегия{% else %}Вручную{% endif %}</td></tr>{% empty %}<tr><td colspan="8">Сделок пока нет.</td></tr>{% endfor %}</tbody></table></div>
+{% include "investing/pagination.html" %}
+<h2 class="h4 mt-4">Последние исполнения стратегий</h2><div class="table-responsive"><table class="table"><thead><tr><th>Стратегия</th><th>Котировка (UTC)</th><th>Шаг</th><th>Результат</th><th>Прибыль цикла</th></tr></thead><tbody>
+{% for item in runs %}<tr><td>{{ item.strategy_name }}</td><td>{{ item.quote.observed_at|date:"d.m.Y H:i:s" }}</td><td>{{ item.get_action_display }}</td><td>{{ item.get_status_display }}{% if item.reason %}: {{ item.reason }}{% endif %}</td><td>{{ item.profit|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="5">Исполнений пока нет.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

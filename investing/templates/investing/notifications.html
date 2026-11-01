@@ -1,0 +1,9 @@
+{% extends "dashboard/base.html" %}
+{% block title %}<title>Уведомления</title>{% endblock %}
+{% block content %}
+<a href="{% url 'investing:workspace' %}">← Личный кабинет</a><h1 class="my-3">Уведомления</h1>
+{% for item in page_obj %}<article class="card mb-3"><div class="card-body"><p>{{ item.message }}</p><p class="small text-muted">Котировка {{ item.observed_at|date:"d.m.Y H:i:s" }} UTC</p>
+{% if item.read_at %}<span class="text-muted">Прочитано</span>{% else %}<form method="post" action="{% url 'investing:notification-read' item.pk %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit">Отметить прочитанным</button></form>{% endif %}
+</div></article>{% empty %}<p>Уведомлений пока нет.</p>{% endfor %}
+{% include "investing/pagination.html" %}
+{% endblock %}

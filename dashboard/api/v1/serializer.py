@@ -17,6 +17,7 @@ class ShareSerializer(serializers.ModelSerializer):
             "last_price",
             "is_trend_high",
             "updated_at",
+            "market_updated_at",
         )
         # Old update clients can retain their existing UID by omitting it.
         extra_kwargs = {"uid": {"required": False}}

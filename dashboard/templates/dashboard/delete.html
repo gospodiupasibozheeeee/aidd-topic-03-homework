@@ -8,6 +8,7 @@
 
     <form method="post">
         {% csrf_token %}
+        {{ form.non_field_errors }}
         <p>Вы уверены, что хотите удалить инструмент: <b>"{{ share.name }}"</b> ?</p>
         <input type="submit" class="btn btn-sm btn-outline-danger rounded-pill" value="Удалить" />
     </form>

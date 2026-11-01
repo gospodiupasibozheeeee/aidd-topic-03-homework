@@ -5,6 +5,7 @@ from user.views import AuthView, LogoutView, RegistrationView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", include("investing.urls")),
     path("", include("dashboard.urls")),
     path("user/", include("user.urls")),
     # Preserve existing bookmarks; named links use the corrected prefix.

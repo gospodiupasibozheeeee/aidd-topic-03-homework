@@ -1,9 +1,8 @@
 import logging
-from itertools import islice
 
 from celery import shared_task
 from django.conf import settings
-from django.db.models import BooleanField, Case, Q, Value, When
+from django.core.exceptions import ValidationError
 
 from dashboard.models import Share
 from dashboard.services.client import (
@@ -12,6 +11,7 @@ from dashboard.services.client import (
     quotation_time,
     quotation_to_decimal,
 )
+from investing.services.prices import record_quote
 
 logger = logging.getLogger("main")
 
@@ -22,11 +22,19 @@ def update_last_price():
         logger.warning("Price refresh skipped: TINKOFF_TOKEN is not configured")
         return 0
     updated = 0
-    shares = iter(
-        Share.objects.order_by("pk").only("pk", "figi").iterator(chunk_size=100)
-    )
+    last_pk = 0
     with MarketDataClient() as client:
-        while batch := list(islice(shares, 100)):
+        while True:
+            # Materialize and close the read cursor before network calls and
+            # writes; an open SQLite iterator can block another writer's commit.
+            batch = list(
+                Share.objects.filter(pk__gt=last_pk)
+                .order_by("pk")
+                .only("pk", "figi")[:100]
+            )
+            if not batch:
+                break
+            last_pk = batch[-1].pk
             try:
                 response = client.last_prices([share.figi for share in batch])
                 prices = {
@@ -42,28 +50,13 @@ def update_last_price():
                     quote = prices[share.figi]
                     price = quotation_to_decimal(quote["price"])
                     timestamp = quotation_time(quote["time"])
-                    # Older quotes cannot overwrite a newer stored observation.
-                    count = (
-                        Share.objects.filter(pk=share.pk)
-                        .filter(
-                            Q(last_price__isnull=True)
-                            | Q(updated_at__isnull=True)
-                            | Q(updated_at__lte=timestamp)
-                        )
-                        .update(
-                            last_price=price,
-                            # Compare against the value stored at UPDATE time,
-                            # including changes made by another worker.
-                            is_trend_high=Case(
-                                When(last_price__lt=price, then=Value(True)),
-                                When(last_price__gt=price, then=Value(False)),
-                                default=Value(None),
-                                output_field=BooleanField(),
-                            ),
-                            updated_at=timestamp,
-                        )
-                    )
-                    updated += count
-                except (KeyError, TypeError, MarketDataError) as exc:
+                    updated += record_quote(share.pk, price, timestamp)
+                except (
+                    KeyError,
+                    TypeError,
+                    MarketDataError,
+                    ValidationError,
+                    Share.DoesNotExist,
+                ) as exc:
                     logger.warning("Price unavailable for share %s: %s", share.pk, exc)
     return updated

@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+{% block title %}<title>Личный кабинет</title>{% endblock %}
+{% block content %}
+<h1>Личный кабинет</h1>
+<p class="text-muted">Ваши наблюдения и виртуальные инвестиции. Условия проверяются при обновлении рыночных данных.</p>
+<div class="row g-4 mb-4">
+<section class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h2 class="h4">Списки наблюдения</h2>
+    <a class="btn btn-outline-primary mb-3" href="{% url 'investing:watchlist-create' %}">Создать список</a>
+    <ul class="list-group list-group-flush">
+    {% for item in watchlists %}<li class="list-group-item"><a href="{% url 'investing:watchlist' item.pk %}">{{ item.name }}</a></li>
+    {% empty %}<li class="list-group-item text-muted">Списков пока нет.</li>{% endfor %}
+    </ul>
+</div></div></section>
+<section class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h2 class="h4">Виртуальные портфели</h2>
+    <a class="btn btn-outline-primary mb-3" href="{% url 'investing:portfolio-create' %}">Создать портфель</a>
+    <ul class="list-group list-group-flush">
+    {% for item in portfolios %}<li class="list-group-item d-flex justify-content-between"><a href="{% url 'investing:portfolio' item.pk %}">{{ item.name }}</a><span>{{ item.cash|floatformat:2 }} {{ item.currency|upper }} свободно</span></li>
+    {% empty %}<li class="list-group-item text-muted">Портфелей пока нет.</li>{% endfor %}
+    </ul>
+</div></div></section>
+</div>
+<section class="mb-4">
+<h2 class="h4">Стратегии</h2>
+<p>Покупка на нижнем уровне и продажа на верхнем. Все операции виртуальные.</p>
+<a class="btn btn-outline-primary mb-3" href="{% url 'investing:strategy-create' %}">Создать стратегию</a>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Стратегия / портфель</th><th>Условие</th><th>Состояние</th><th>Результат циклов</th><th>Управление</th></tr></thead><tbody>
+{% for item in strategies %}{% with rule=item.rule %}
+<tr><td>{{ rule.name }}<br><a href="{% url 'investing:portfolio' rule.portfolio_id %}">{{ rule.portfolio.name }}</a> · {{ rule.share.ticker }}</td>
+<td>Покупка ≤ {{ rule.buy_below|floatformat:"-9" }}<br>Продажа ≥ {{ rule.sell_above|floatformat:"-9" }}<br>Количество следующей покупки: {{ rule.quantity }}</td>
+<td>{% if rule.active %}Активна{% else %}Приостановлена{% endif %}<br>Ожидает: {{ rule.get_next_action_display }}{% if rule.cycle_quantity %} ({{ rule.cycle_quantity }} шт.){% endif %}</td>
+<td>{{ item.stats.profit|floatformat:2 }} {{ rule.portfolio.currency|upper }}<br><small>Выполнено {{ item.stats.executed }}, отклонено {{ item.stats.rejected }}</small></td>
+<td><a href="{% url 'investing:strategy-edit' rule.pk %}">Изменить / приостановить</a><form method="post" action="{% url 'investing:strategy-delete' rule.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger mt-2" type="submit">Удалить правило</button></form></td></tr>
+{% endwith %}{% empty %}<tr><td colspan="5">Стратегий пока нет. Сначала создайте портфель.</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="small text-muted">Удаление правила сохраняет сделки и активы портфеля. Журнал исполнения доступен на странице портфеля.</p>
+</section>
+<section class="mb-4"><h2 class="h4"><a href="{% url 'investing:notifications' %}">Уведомления</a> · непрочитанных: {{ unread }}</h2>
+{% for item in notifications %}<div class="alert {% if item.read_at %}alert-secondary{% else %}alert-info{% endif %}">{{ item.message }}<br><small>Котировка {{ item.observed_at|date:"d.m.Y H:i:s" }} UTC</small></div>{% empty %}<p>Уведомлений пока нет.</p>{% endfor %}
+</section>
+{% endblock %}

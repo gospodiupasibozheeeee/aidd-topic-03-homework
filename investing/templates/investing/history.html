@@ -1,0 +1,16 @@
+{% extends "dashboard/base.html" %}
+{% block title %}<title>История: {{ share.ticker }}</title>{% endblock %}
+{% block content %}
+<a href="{% url 'dashboard:detail' share.pk %}">← Карточка акции</a><h1 class="my-3">История цен: {{ share.ticker }}</h1>
+<p>Собственные наблюдения приложения. Свечи внешнего сервиса доступны в карточке акции.</p>
+<form method="get" class="mb-4">{{ form.as_p }}<button type="submit" class="btn btn-primary">Показать период</button></form>
+{% if summary.count %}
+<p>{{ form.cleaned_data.start|date:"d.m.Y" }} — {{ form.cleaned_data.end|date:"d.m.Y" }} · Наблюдений: {{ summary.count }}</p>
+<p>Первая цена: {{ summary.first_price|floatformat:"-9" }} · Последняя: {{ summary.last_price|floatformat:"-9" }} · Изменение: {{ summary.absolute_change|floatformat:"-9"|default:"—" }} · {{ summary.percent_change|floatformat:2|default:"—" }} %</p>
+{% if not summary.comparable %}<p role="status">В периоде разные валюты. Общее изменение не рассчитывается.</p>{% endif %}
+<p class="text-muted">График показывает среднюю цену за каждый день (UTC).</p>
+{{ graph|safe }}
+<h2 class="h4">Исходные наблюдения</h2><div class="table-responsive"><table class="table"><thead><tr><th>Время (UTC)</th><th>Цена</th><th>Валюта</th></tr></thead><tbody>{% for point in page_obj %}<tr><td>{{ point.observed_at|date:"d.m.Y H:i:s" }}</td><td>{{ point.price|floatformat:"-9" }}</td><td>{{ point.currency|upper }}</td></tr>{% endfor %}</tbody></table></div>
+{% include "investing/pagination.html" %}
+{% elif not form.errors %}<p role="status">За выбранный период нет сохранённых котировок.</p>{% endif %}
+{% endblock %}

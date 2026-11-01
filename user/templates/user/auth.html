@@ -2,6 +2,7 @@
 {% block content %}
 <form action="{% url 'user:auth' %}" method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
     <h1 class="h3 mb-3 fw-normal">Войдите в профиль</h1>
     {{ form.as_p }}
     <button class="w-100 btn btn-lg btn-primary" type="submit">Войти</button>

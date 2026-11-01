@@ -11,6 +11,7 @@ class DecimalMigrationTests(TransactionTestCase):
 
     def test_existing_quotes_and_nulls_survive_upgrade(self):
         executor = MigrationExecutor(connection)
+        all_targets = executor.loader.graph.leaf_nodes()
         executor.migrate(self.before)
         try:
             old_share = executor.loader.project_state(self.before).apps.get_model(
@@ -27,7 +28,7 @@ class DecimalMigrationTests(TransactionTestCase):
                     last_price=price,
                 )
             executor = MigrationExecutor(connection)
-            executor.migrate(self.after)
+            executor.migrate(all_targets)
             new_share = executor.loader.project_state(self.after).apps.get_model(
                 "dashboard", "Share"
             )
@@ -38,4 +39,4 @@ class DecimalMigrationTests(TransactionTestCase):
             )
             self.assertIsNone(new_share.objects.get(figi="LEGACY2").last_price)
         finally:
-            MigrationExecutor(connection).migrate(self.after)
+            MigrationExecutor(connection).migrate(all_targets)

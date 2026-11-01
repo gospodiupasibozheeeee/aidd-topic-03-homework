@@ -107,3 +107,22 @@ class AccountTests(TestCase):
         client = Client(enforce_csrf_checks=True)
         for name in ("auth", "registration", "logout"):
             self.assertEqual(client.post(reverse(f"user:{name}"), {}).status_code, 403)
+
+    def test_login_returns_to_private_page_and_rejects_external_redirect(self):
+        get_user_model().objects.create_user(
+            "redirect@example.com", password=self.password
+        )
+        for destination, expected in (
+            ("/workspace/", "/workspace/"),
+            ("https://example.org/", "/"),
+        ):
+            self.client.logout()
+            response = self.client.post(
+                reverse("user:auth"),
+                {
+                    "email": "redirect@example.com",
+                    "password": self.password,
+                    "next": destination,
+                },
+            )
+            self.assertRedirects(response, expected)

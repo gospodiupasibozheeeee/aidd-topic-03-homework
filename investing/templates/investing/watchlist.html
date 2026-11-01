@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %}
+{% block title %}<title>{{ watchlist.name }}</title>{% endblock %}
+{% block content %}
+<a href="{% url 'investing:workspace' %}">← Личный кабинет</a><h1 class="my-3">{{ watchlist.name }}</h1>
+<p>Для каждого условия приходит одно уведомление. Измените целевую цену или направление, чтобы настроить новое условие.</p>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Акция</th><th>Цена</th><th>Условие</th><th>Состояние</th><th>Управление</th></tr></thead><tbody>
+{% for item in items %}<tr><td><a href="{% url 'dashboard:detail' item.share_id %}">{{ item.share.ticker }}</a> · {{ item.share.name }}</td>
+<td>{{ item.share.last_price|default_if_none:"—" }} {{ item.share.currency }}</td><td>{% if item.target %}{{ item.get_direction_display }} {{ item.target }}{% else %}Без уведомления{% endif %}</td>
+<td>{% if item.triggered_at %}Сработало {{ item.triggered_at|date:"d.m.Y H:i" }}{% elif item.target %}Ожидает{% else %}—{% endif %}</td>
+<td><a href="{% url 'investing:watch-item-edit' item.pk %}">Изменить</a><form method="post" action="{% url 'investing:watch-item-delete' item.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger mt-1" type="submit">Убрать акцию</button></form></td></tr>
+{% empty %}<tr><td colspan="5">Добавьте первую акцию.</td></tr>{% endfor %}</tbody></table></div>
+<section class="col-lg-6 my-4"><h2 class="h4">Добавить акцию</h2><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Добавить</button></form></section>
+<form class="my-4" method="post" action="{% url 'investing:watchlist-delete' watchlist.pk %}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Удалить список</button></form>
+{% endblock %}

@@ -21,6 +21,10 @@ class Share(models.Model):
         blank=True, null=True, verbose_name="Растет цена"
     )
     updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    market_updated_at = models.DateTimeField(null=True, blank=True, editable=False)
+
+    def __str__(self):
+        return f"{self.ticker} — {self.name}"
 
     class Meta:
         verbose_name = "Акция"

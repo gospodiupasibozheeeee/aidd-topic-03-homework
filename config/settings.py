@@ -18,6 +18,7 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(
     ","
 )
+LOGIN_URL = "user:auth"
 AUTHENTICATION_BACKENDS = ["user.backends.CaseInsensitiveModelBackend"]
 
 
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     "crispy_forms",
     "crispy_bootstrap3",
     "dashboard",
+    "investing",
     "user",
     "rest_framework",
     "django_filters",
@@ -119,6 +121,7 @@ elif DB_ENGINE == "sqlite":
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
+            "OPTIONS": {"timeout": 20, "transaction_mode": "IMMEDIATE"},
         }
     }
 else:

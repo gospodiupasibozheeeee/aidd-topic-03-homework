@@ -2,6 +2,7 @@ from django.contrib.auth import login, logout
 from django.db import IntegrityError, transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import FormView, View
 
 from .forms import AuthForm, RegistrationForm
@@ -11,6 +12,23 @@ class AuthView(FormView):
     template_name = "user/auth.html"
     form_class = AuthForm
     success_url = reverse_lazy("dashboard:index")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["next"] = self.request.POST.get("next") or self.request.GET.get(
+            "next", ""
+        )
+        return context
+
+    def get_success_url(self):
+        destination = self.request.POST.get("next") or self.request.GET.get("next")
+        if destination and url_has_allowed_host_and_scheme(
+            destination,
+            {self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return destination
+        return super().get_success_url()
 
     def get_form_kwargs(self):
         return {**super().get_form_kwargs(), "request": self.request}

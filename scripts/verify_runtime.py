@@ -33,6 +33,7 @@ INSTRUMENT = dict(
 
 class MarketFixture(BaseHTTPRequestHandler):
     unavailable = False
+    quotation = {"units": "123", "nano": 456789123}
 
     def do_POST(self):
         payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
@@ -43,7 +44,7 @@ class MarketFixture(BaseHTTPRequestHandler):
             self.send_error(503)
             return
         now = datetime.now(timezone.utc).isoformat()
-        quotation = {"units": "123", "nano": 456789123}
+        quotation = dict(self.quotation)
         if self.path.endswith("/Shares"):
             response = {"instruments": [INSTRUMENT]}
         elif self.path.endswith("/GetLastPrices"):
@@ -84,6 +85,11 @@ def main():
     )
     parser.add_argument(
         "--broker", help="Use a real Redis broker with isolated queue, worker and Beat"
+    )
+    parser.add_argument(
+        "--features",
+        action="store_true",
+        help="Also verify watchlists, portfolios, history and strategies",
     )
     args = parser.parse_args()
     env = os.environ.copy()
@@ -330,6 +336,21 @@ def main():
                         == 200,
                         "Admin login page",
                     )
+                    if args.features:
+                        from verify_features import verify_features
+
+                        def refresh():
+                            if not args.broker:
+                                command(
+                                    "manage.py",
+                                    "shell",
+                                    "-c",
+                                    "from dashboard.tasks import update_last_price; update_last_price()",
+                                )
+
+                        verify_features(
+                            session, base, post, check, refresh, MarketFixture
+                        )
                     session.close()
                 except Exception:
                     log.flush()
