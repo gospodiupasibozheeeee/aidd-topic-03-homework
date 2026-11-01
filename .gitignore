@@ -28,3 +28,8 @@ celeryd.pid
 *.log
 .pytest_cache/
 app.logs
+
+# Generated test reports and static assets
+.coverage
+htmlcov/
+staticfiles/
