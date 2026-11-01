@@ -1,0 +1,158 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}<title>{{ object.name }} — портфель</title>{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-0">{{ object.name }}</h1>
+            <div class="text-muted small">Виртуальный портфель</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'investments:portfolio-list' %}" class="btn btn-outline-secondary">
+                К портфелям
+            </a>
+            <a href="{% url 'investments:portfolio-delete' object.pk %}" class="btn btn-outline-danger">
+                Удалить
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Стоимость (в валюте инструментов)</div>
+                <div class="h5 mb-0">{{ summary.market_value|floatformat:2 }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Вложено</div>
+                <div class="h5 mb-0">{{ summary.total_cost|floatformat:2 }}</div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Нереализованный P&amp;L</div>
+                <div class="h5 mb-0 {% if summary.unrealized_pnl < 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ summary.unrealized_pnl|floatformat:2 }}
+                </div>
+            </div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body">
+                <div class="text-muted small">Итого P&amp;L / доходность</div>
+                <div class="h5 mb-0 {% if summary.total_pnl < 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ summary.total_pnl|floatformat:2 }}
+                    ({{ summary.return_percent|floatformat:2 }}%)
+                </div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Позиции</h2></div>
+                <div class="card-body p-0">
+                    {% if positions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0 align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Акция</th>
+                                    <th class="text-end">Кол-во</th>
+                                    <th class="text-end">Средняя</th>
+                                    <th class="text-end">Текущая</th>
+                                    <th class="text-end">Стоимость</th>
+                                    <th class="text-end">P&amp;L</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for position in positions %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'dashboard:detail' position.share.pk %}">
+                                                {{ position.share.ticker }}
+                                            </a>
+                                            <div class="text-muted small">{{ position.share.name }}</div>
+                                        </td>
+                                        <td class="text-end">{{ position.quantity|floatformat:4 }}</td>
+                                        <td class="text-end">{{ position.average_price|floatformat:2 }}</td>
+                                        <td class="text-end">
+                                            {% if position.current_price is not None %}
+                                                {{ position.current_price|floatformat:2 }}
+                                            {% else %}—{% endif %}
+                                        </td>
+                                        <td class="text-end">{{ position.market_value|floatformat:2 }}</td>
+                                        <td class="text-end {% if position.unrealized_pnl < 0 %}text-danger{% else %}text-success{% endif %}">
+                                            {{ position.unrealized_pnl|floatformat:2 }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">Позиций пока нет. Добавьте первую операцию.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">История операций</h2></div>
+                <div class="card-body p-0">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead><tr>
+                                    <th>Дата</th><th>Акция</th><th>Тип</th>
+                                    <th class="text-end">Кол-во</th><th class="text-end">Цена</th><th>Комментарий</th>
+                                </tr></thead>
+                                <tbody>
+                                {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.executed_at|date:"d.m.Y H:i" }}</td>
+                                        <td>{{ transaction.share.ticker }}</td>
+                                        <td>
+                                            <span class="badge {% if transaction.side == 'buy' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ transaction.get_side_display }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">{{ transaction.quantity|floatformat:4 }}</td>
+                                        <td class="text-end">{{ transaction.price|floatformat:2 }}</td>
+                                        <td>{{ transaction.note|default:"—" }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">Операций пока нет.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Новая операция</h2></div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary w-100">Сохранить операцию</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

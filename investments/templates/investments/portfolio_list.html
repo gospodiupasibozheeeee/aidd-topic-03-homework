@@ -1,0 +1,37 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}<title>Портфели</title>{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h3 mb-0">Виртуальные портфели</h1>
+        <a href="{% url 'investments:portfolio-create' %}" class="btn btn-primary">
+            Новый портфель
+        </a>
+    </div>
+
+    {% if portfolios %}
+        <div class="row g-3">
+            {% for portfolio in portfolios %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="h5">{{ portfolio.name }}</h2>
+                            <p class="text-muted small mb-3">
+                                Операций: {{ portfolio.transactions.count }}
+                            </p>
+                            <a href="{% url 'investments:portfolio-detail' portfolio.pk %}"
+                               class="btn btn-sm btn-outline-primary">
+                                Открыть
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-secondary">
+            Портфелей пока нет. Создайте первый портфель, чтобы моделировать покупки и продажи.
+        </div>
+    {% endif %}
+{% endblock %}

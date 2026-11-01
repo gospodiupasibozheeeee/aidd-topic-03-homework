@@ -84,7 +84,9 @@ python manage.py check
 - `config/` — настройки, URLconf, Celery, WSGI/ASGI;
 - `dashboard/` — модель `Share`, HTML-представления, REST API, сервисы Tinkoff,
   задача Celery, импорт и admin;
+- `investments/` — портфели, наблюдение и уведомления, история цен, стратегии;
 - `user/` — регистрация, вход и выход на стандартной `auth.User`.
 
 Документы анализа и требований: [ANALYSIS.md](ANALYSIS.md),
-[REQUIREMENTS.md](REQUIREMENTS.md), [MODERNIZATION.md](MODERNIZATION.md).
+[REQUIREMENTS.md](REQUIREMENTS.md), [MODERNIZATION.md](MODERNIZATION.md),
+[FEATURES.md](FEATURES.md).

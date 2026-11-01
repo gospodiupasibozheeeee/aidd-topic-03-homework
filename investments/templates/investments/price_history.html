@@ -1,0 +1,75 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}<title>{{ share.ticker }} — история цен</title>{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.plot.ly/plotly-3.7.0.min.js" charset="utf-8"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-0">{{ share.name }}</h1>
+            <div class="text-muted small">{{ share.ticker }} · история сохранённых цен</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard:detail' share.pk %}" class="btn btn-outline-secondary">
+                К карточке
+            </a>
+            <a href="{% url 'dashboard:index' %}" class="btn btn-outline-secondary">К списку</a>
+        </div>
+    </div>
+
+    <div class="btn-group mb-4" role="group" aria-label="Период">
+        {% for days, label in periods.items %}
+            <a href="?period={{ days }}"
+               class="btn btn-sm {% if days == period %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Первая цена</div>
+            <div class="h5 mb-0">
+                {% if summary.first_price is not None %}{{ summary.first_price|floatformat:2 }}{% else %}—{% endif %}
+            </div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Последняя цена</div>
+            <div class="h5 mb-0">
+                {% if summary.last_price is not None %}{{ summary.last_price|floatformat:2 }}{% else %}—{% endif %}
+            </div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Изменение</div>
+            <div class="h5 mb-0 {% if summary.absolute_change < 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ summary.absolute_change|floatformat:2 }}
+                ({{ summary.percent_change|floatformat:2 }}%)
+            </div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Точек / диапазон</div>
+            <div class="h5 mb-0">{{ summary.points }}</div>
+            <div class="text-muted small">
+                {% if summary.minimum is not None %}
+                    {{ summary.minimum|floatformat:2 }} — {{ summary.maximum|floatformat:2 }}
+                {% endif %}
+            </div>
+        </div></div></div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if chart %}
+                <div class="plotly-chart">{{ chart|safe }}</div>
+            {% else %}
+                <div class="alert alert-secondary mb-0">
+                    За выбранный период сохранённых цен пока нет. Данные накапливаются
+                    фоновой задачей обновления котировок.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

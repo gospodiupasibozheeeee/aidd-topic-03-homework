@@ -12,7 +12,12 @@
             <h1 class="h3 mb-1">{{ share.name }}</h1>
             <div class="text-muted">{{ share.ticker }} · {{ share.isin }}</div>
         </div>
-        <a href="{% url 'dashboard:index' %}" class="btn btn-outline-secondary">К списку</a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'investments:price-history' share.pk %}" class="btn btn-outline-primary">
+                История цен
+            </a>
+            <a href="{% url 'dashboard:index' %}" class="btn btn-outline-secondary">К списку</a>
+        </div>
     </div>
 
     <div class="row g-4">

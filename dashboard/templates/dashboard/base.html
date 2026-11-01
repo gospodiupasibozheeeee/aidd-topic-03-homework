@@ -18,6 +18,12 @@
         <nav class="d-flex align-items-center gap-3">
             <a href="{% url 'dashboard:index' %}" class="link-secondary text-decoration-none">Главная</a>
             {% if user.is_authenticated %}
+                <a href="{% url 'investments:portfolio-list' %}" class="link-secondary text-decoration-none">Портфели</a>
+                <a href="{% url 'investments:watchlist-list' %}" class="link-secondary text-decoration-none">Наблюдение</a>
+                <a href="{% url 'investments:strategy-list' %}" class="link-secondary text-decoration-none">Стратегии</a>
+                <a href="{% url 'investments:notifications' %}" class="link-secondary text-decoration-none">
+                    Уведомления{% if unread_notifications_count %} <span class="badge bg-danger">{{ unread_notifications_count }}</span>{% endif %}
+                </a>
                 <span class="text-muted small">{{ user.email }}</span>
                 <form method="post" action="{% url 'user:logout' %}" class="d-inline">
                     {% csrf_token %}

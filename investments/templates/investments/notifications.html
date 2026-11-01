@@ -1,0 +1,46 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}<title>Уведомления</title>{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-0">Уведомления</h1>
+            <div class="text-muted small">
+                Непрочитанных: {{ unread_count }}
+            </div>
+        </div>
+        <a href="{% url 'investments:watchlist-list' %}" class="btn btn-outline-secondary">
+            К наблюдению
+        </a>
+    </div>
+
+    {% if notifications %}
+        <div class="list-group">
+            {% for notification in notifications %}
+                <div class="list-group-item {% if not notification.is_read %}list-group-item-primary{% endif %}">
+                    <div class="d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="fw-semibold">{{ notification.title }}</div>
+                            <div class="text-muted small">{{ notification.created_at|date:"d.m.Y H:i" }}</div>
+                            <p class="mb-0 mt-1">{{ notification.message }}</p>
+                        </div>
+                        {% if not notification.is_read %}
+                            <form method="post"
+                                  action="{% url 'investments:notification-read' notification.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    Прочитано
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-secondary">
+            Уведомлений пока нет. Они появятся при достижении целевых цен.
+        </div>
+    {% endif %}
+{% endblock %}

@@ -22,5 +22,6 @@ urlpatterns = [
         RedirectView.as_view(pattern_name="user:logout", permanent=False),
         name="legacy-logout",
     ),
+    path("investments/", include("investments.urls")),
     path("", include("dashboard.urls")),
 ]

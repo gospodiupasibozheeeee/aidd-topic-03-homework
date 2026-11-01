@@ -55,5 +55,18 @@ def update_last_price() -> int:
         )
         updated += 1
 
+    try:
+        from investments.services.market_events import process_market_updates
+
+        event_result = process_market_updates(prices)
+        logger.info(
+            "Market events: snapshots=%s watchlist=%s strategies=%s",
+            event_result.snapshots,
+            event_result.watchlist_events,
+            event_result.strategy_events,
+        )
+    except Exception:
+        logger.exception("Could not process post-price market events")
+
     logger.info("Updated prices for %s of %s shares", updated, len(shares))
     return updated

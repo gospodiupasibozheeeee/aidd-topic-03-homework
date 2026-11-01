@@ -1,0 +1,129 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}<title>{{ object.name }} — стратегия</title>{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-0">{{ object.name }}</h1>
+            <div class="text-muted small">
+                {{ object.share.ticker }} · {{ object.share.name }}
+                {% if object.is_active %}
+                    <span class="badge bg-success">Активна</span>
+                {% else %}
+                    <span class="badge bg-secondary">Выключена</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'investments:strategy-update' object.pk %}" class="btn btn-outline-secondary">
+                Редактировать
+            </a>
+            <form method="post" action="{% url 'investments:strategy-evaluate' object.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Проверить сейчас</button>
+            </form>
+            <form method="post" action="{% url 'investments:strategy-reset' object.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-warning">Сбросить</button>
+            </form>
+            <a href="{% url 'investments:strategy-list' %}" class="btn btn-outline-secondary">
+                К стратегиям
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Капитал</div>
+            <div class="h5 mb-0">{{ summary.equity|floatformat:2 }} {{ object.share.currency }}</div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Свободные средства</div>
+            <div class="h5 mb-0">{{ summary.cash|floatformat:2 }} {{ object.share.currency }}</div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Позиция</div>
+            <div class="h5 mb-0">{{ summary.position_quantity|floatformat:4 }} шт.</div>
+        </div></div></div>
+        <div class="col-md-3"><div class="card"><div class="card-body">
+            <div class="text-muted small">Прибыль / доходность</div>
+            <div class="h5 mb-0 {% if summary.profit < 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ summary.profit|floatformat:2 }} {{ object.share.currency }}
+                ({{ summary.return_percent|floatformat:2 }}%)
+            </div>
+        </div></div></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Параметры</h2></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-7 fw-normal text-muted">Цена покупки ≤</dt>
+                        <dd class="col-5 text-end">{{ object.buy_below|floatformat:2 }}</dd>
+                        <dt class="col-7 fw-normal text-muted">Цена продажи ≥</dt>
+                        <dd class="col-5 text-end">{{ object.sell_above|floatformat:2 }}</dd>
+                        <dt class="col-7 fw-normal text-muted">Количество</dt>
+                        <dd class="col-5 text-end">{{ object.quantity|floatformat:4 }}</dd>
+                        <dt class="col-7 fw-normal text-muted">Начальный капитал</dt>
+                        <dd class="col-5 text-end">{{ object.initial_cash|floatformat:2 }}</dd>
+                        <dt class="col-7 fw-normal text-muted">Текущая цена</dt>
+                        <dd class="col-5 text-end">
+                            {% if summary.current_price is not None %}
+                                {{ summary.current_price|floatformat:2 }}
+                            {% else %}—{% endif %}
+                        </dd>
+                        <dt class="col-7 fw-normal text-muted">Реализованный P&amp;L</dt>
+                        <dd class="col-5 text-end">{{ object.realized_pnl|floatformat:2 }}</dd>
+                    </dl>
+                    <form method="post" action="{% url 'investments:strategy-delete' object.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить стратегию</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Журнал сделок</h2></div>
+                <div class="card-body p-0">
+                    {% if trades %}
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead><tr>
+                                    <th>Время</th><th>Тип</th><th class="text-end">Цена</th>
+                                    <th class="text-end">Кол-во</th><th>Причина</th>
+                                    <th class="text-end">P&amp;L</th>
+                                </tr></thead>
+                                <tbody>
+                                {% for trade in trades %}
+                                    <tr>
+                                        <td>{{ trade.executed_at|date:"d.m.Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge {% if trade.side == 'buy' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ trade.get_side_display }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">{{ trade.price|floatformat:2 }}</td>
+                                        <td class="text-end">{{ trade.quantity|floatformat:4 }}</td>
+                                        <td class="small">{{ trade.reason }}</td>
+                                        <td class="text-end">{{ trade.pnl|floatformat:2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">
+                            Сделок пока нет. Нажмите «Проверить сейчас» или дождитесь
+                            фонового обновления цены.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
