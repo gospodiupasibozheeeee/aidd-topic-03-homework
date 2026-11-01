@@ -27,4 +27,7 @@ celeryd.pid
 # Logs and test cache
 *.log
 .pytest_cache/
+.coverage
+htmlcov/
+staticfiles/
 app.logs

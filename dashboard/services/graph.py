@@ -1,36 +1,53 @@
-from datetime import timedelta
+from __future__ import annotations
 
-from plotly.graph_objs import Scatter
+import plotly.graph_objects as go
 from plotly.offline import plot
-from tinkoff.invest import CandleInterval, Client
-from tinkoff.invest.utils import now
 
-from config.settings import TINKOFF_TOKEN
+from .tinkoff import MarketDataError, get_candles, quotation_to_decimal
 
 
-def get_graph(share):
-    with Client(TINKOFF_TOKEN) as client:
-        x_data, y_data = [], []
-        for candle in client.get_all_candles(
-            figi=share.figi,
-            from_=now() - timedelta(days=180),
-            interval=CandleInterval.CANDLE_INTERVAL_DAY,
-        ):
-            x_data.append(candle.time.date())
-            y_data.append(candle.close.units)
-    plot_div = plot(
-        [
-            Scatter(
+def get_graph(share, days: int = 180) -> str:
+    """Build a Plotly HTML fragment with daily closing prices.
+
+    Only the chart container is generated; Plotly.js itself is loaded once in
+    the page template (``include_plotlyjs=False``) to avoid a multi-megabyte
+    inline script on every request.
+    """
+
+    candles = get_candles(share, days=days)
+    if not candles:
+        raise MarketDataError(
+            f"Нет исторических данных для {share.ticker} за {days} дней."
+        )
+
+    x_data = [candle.time.date() for candle in candles]
+    y_data = [float(quotation_to_decimal(candle.close)) for candle in candles]
+
+    figure = go.Figure(
+        data=[
+            go.Scatter(
                 x=x_data,
                 y=y_data,
                 mode="lines",
-                name="test",
-                opacity=0.8,
-                marker_color="red",
+                name=share.ticker,
+                line={"color": "#0d6efd", "width": 2},
+                hovertemplate="%{x|%d.%m.%Y}<br>%{y:.2f}<extra></extra>",
             )
-        ],
-        output_type="div",
-        show_link=False,
-        link_text="",
+        ]
     )
-    return plot_div
+    figure.update_layout(
+        margin={"l": 40, "r": 20, "t": 20, "b": 40},
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        showlegend=False,
+        xaxis={"showgrid": True, "gridcolor": "#e9ecef"},
+        yaxis={"showgrid": True, "gridcolor": "#e9ecef"},
+    )
+
+    return plot(
+        figure,
+        output_type="div",
+        include_plotlyjs=False,
+        show_link=False,
+        config={"displayModeBar": False, "responsive": True},
+    )

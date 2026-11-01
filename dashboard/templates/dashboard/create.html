@@ -1,23 +1,35 @@
 {% extends "dashboard/base.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %}
-<title>Добавить инструмент</title>
+    <title>{% if form.instance.pk %}Редактирование акции{% else %}Добавление акции{% endif %}</title>
 {% endblock %}
 
 {% block content %}
-{% load crispy_forms_tags %}
-<div class="row">
-    <div class="col-4"></div>
-    <div class="col-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="h4 mb-4">
+                        {% if form.instance.pk %}Редактировать акцию{% else %}Добавить акцию{% endif %}
+                    </h1>
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {% for field in form %}
-            {{ field|as_crispy_field }}
-            {% endfor %}
-            <button class="w-100 btn btn-lg btn-primary mt-5" type="submit">Сохранить</button>
-        </form>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                            {{ field|as_crispy_field }}
+                        {% endfor %}
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                            <a href="{% url 'dashboard:index' %}" class="btn btn-outline-secondary">Отмена</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-4"></div>
-</div>
 {% endblock %}

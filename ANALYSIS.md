@@ -19,6 +19,8 @@
 
 Спецификация восстановленных функциональных требований, пользовательских сценариев
 и перечень выявленных дефектов приведены в документе [REQUIREMENTS.md](REQUIREMENTS.md).
+Изменения, выполненные при модернизации (Task 3), описаны в
+[MODERNIZATION.md](MODERNIZATION.md); данный документ фиксирует исходную версию.
 
 ---
 
@@ -59,7 +61,7 @@
 | 5 | Редактирование акции через сайт | `ShareUpdateView` | Только для аутентифицированных |
 | 6 | Удаление акции через сайт | `ShareDeleteView` | Только для аутентифицированных; подтверждение через GET-страницу |
 | 7 | REST CRUD акций | `ShareViewSet` (`dashboard/api/v1/views.py:16-22`) | Нет ограничений доступа; `uid` не сериализуется |
-| 8 | Фильтрация, сортировка, поиск, пагинация API | `ShareFilter`, `OrderingFilter`, `SearchFilter`, `LimitOffsetPagination` | Поиск — по префиксу `name`; фильтр — точные `name`/`ticker` |
+| 8 | Фильтрация, сортировка, поиск, пагинация API | `ShareFilter`, `OrderingFilter`, `SearchFilter`, `LimitOffsetPagination` | Поиск — regex (`iregex`) по `name`; фильтр — точные `name`/`ticker` |
 | 9 | Регистрация | `RegistrationView`, `RegistrationForm` | Парольные валидаторы Django не применяются; ошибки полей могут давать 500 |
 | 10 | Вход/выход | `AuthView`, `LogoutView` | Вход по e-mail как по `username`; выход через GET |
 | 11 | Импорт справочника акций | `manage.py add_shares` | Разовая команда; не обновляет существующие записи |
@@ -1042,7 +1044,8 @@ class ShareViewSet(viewsets.ModelViewSet):
 - `OrderingFilter` — `?ordering=name`, `?ordering=-ticker`; по умолчанию явной
   сортировки нет (порядок зависит от БД).
 - `SearchFilter` — `?search=...`; `search_fields = ["$name"]` означает
-  **prefix-поиск** (`istartswith`) по `name`, а не полнотекстовый/регулярный поиск.
+  **regex-поиск** (`iregex`) по `name` без учёта регистра, а не префиксный или
+  полнотекстовый поиск.
 - Пагинация — глобальная `LimitOffsetPagination`, `PAGE_SIZE=100`
   (`config/settings.py:31-35`): параметры `limit`, `offset`; ответ
   `{count, next, previous, results}`.
@@ -1093,9 +1096,8 @@ class ShareViewSet(viewsets.ModelViewSet):
   запись с тем же `figi`/`ticker` → `IntegrityError`.
 - `Share.objects.all()` в фоновой задаче загружает все объекты в память; нет
   `iterator()`, `only()`, `values()`.
-- Фильтр по `name` в API не использует индекс (индекса на `name` нет); поиск по
-  префиксу `$name` в PostgreSQL не сможет эффективно использовать обычный btree-индекс
-  без `varchar_pattern_ops`.
+- Фильтр по `name` в API не использует индекс (индекса на `name` нет); regex-поиск
+  по `$name` в PostgreSQL не сможет эффективно использовать обычный btree-индекс.
 - `Share.objects.all()` в API без `ordering` не гарантирует порядок; для стабильной
   пагинации нужен явный `ordering`.
 

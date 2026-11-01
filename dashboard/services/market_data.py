@@ -1,11 +1,29 @@
-from tinkoff.invest import Client
+from __future__ import annotations
 
-from config.settings import TINKOFF_TOKEN, logger
+import logging
+
+from .tinkoff import MarketDataError, get_last_prices, quotation_to_decimal
+
+logger = logging.getLogger("dashboard")
 
 
 def get_last_data(share):
-    with Client(TINKOFF_TOKEN) as client:
-        resp = client.market_data.get_last_prices(figi=[share.figi])
-        resp = resp.last_prices.pop()
-        logger.info(f"Get last data for share with id {share.id}")
-        return [resp.price.units, resp.time]
+    """Return ``(price, time)`` for a single share.
+
+    Kept as a backwards-compatible wrapper used by older callers/tests; the
+    background task uses :func:`get_last_prices` to batch requests.
+    """
+
+    prices = get_last_prices([share])
+    if share.figi not in prices:
+        raise MarketDataError(f"Нет цены для {share.ticker} ({share.figi})")
+    logger.info("Get last data for share with id %s", share.id)
+    return prices[share.figi]
+
+
+__all__ = [
+    "MarketDataError",
+    "get_last_data",
+    "get_last_prices",
+    "quotation_to_decimal",
+]

@@ -1,4 +1,8 @@
-from django.contrib.auth import authenticate, login, logout
+from __future__ import annotations
+
+from django.contrib import messages
+from django.contrib.auth import login, logout
+from django.db import IntegrityError
 from django.shortcuts import redirect, render
 from django.views.generic import View
 
@@ -6,59 +10,61 @@ from .forms import AuthForm, RegistrationForm
 
 
 class AuthView(View):
-    """Авторизация"""
+    """Log in an existing user."""
 
     @staticmethod
     def get(request):
-        return render(request, "user/auth.html", {"form": AuthForm})
+        return render(request, "user/auth.html", {"form": AuthForm()})
 
     @staticmethod
     def post(request):
         form = AuthForm(request.POST)
-        user = authenticate(
-            request, username=form.data["email"].lower(), password=form.data["password"]
-        )
 
-        if user is not None:
-            login(request, user)
+        if form.is_valid():
+            login(request, form.user)
             return redirect("dashboard:index")
-        else:
-            return render(
-                request,
-                "user/auth.html",
-                {
-                    "form": form,
-                    "error": "Неверный логин или пароль! Повторите попытку.",
-                },
-            )
+
+        return render(request, "user/auth.html", {"form": form})
 
 
 class RegistrationView(View):
-    """Регистрация"""
+    """Register a new user and log them in."""
 
     @staticmethod
     def get(request):
-        return render(request, "user/registration.html", {"form": RegistrationForm})
+        return render(request, "user/registration.html", {"form": RegistrationForm()})
 
     @staticmethod
     def post(request):
         form = RegistrationForm(request.POST)
+
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("dashboard:index")
-        else:
-            return render(
-                request,
-                "user/registration.html",
-                {"form": form, "error": form.errors["__all__"].data[0].message},
-            )
+            try:
+                user = form.save()
+            except IntegrityError:
+                # The unique e-mail check is not atomic; handle a concurrent
+                # registration gracefully instead of returning HTTP 500.
+                form.add_error(
+                    "email",
+                    "Данный e-mail уже зарегистрирован. Попробуйте войти.",
+                )
+            else:
+                login(request, user)
+                messages.success(request, "Регистрация завершена.")
+                return redirect("dashboard:index")
+
+        return render(request, "user/registration.html", {"form": form})
 
 
 class LogoutView(View):
-    """Выход"""
+    """Log out via POST; GET is kept as a safe redirect for old links."""
 
     @staticmethod
     def get(request):
+        return redirect("dashboard:index")
+
+    @staticmethod
+    def post(request):
         logout(request)
+        messages.success(request, "Вы вышли из системы.")
         return redirect("dashboard:index")

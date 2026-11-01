@@ -1,26 +1,32 @@
-
 {% extends "user/base.html" %}
-{% block content %}
-    <form  action="{% url 'user:registration'%}" method="POST">
-        {% csrf_token %}
-        <h1 class="h3 mb-3 fw-normal">Регистрация в системе</h1>
 
-        <div>
+{% block content %}
+    <form action="{% url 'user:registration' %}" method="post" novalidate>
+        {% csrf_token %}
+        <h1 class="h3 mb-4 fw-normal text-center">Регистрация</h1>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+            {{ form.email.label_tag }}
             {{ form.email }}
+            {{ form.email.errors }}
         </div>
-        <div>
+        <div class="mb-3">
+            {{ form.password1.label_tag }}
             {{ form.password1 }}
+            {{ form.password1.errors }}
         </div>
-        <div>
+        <div class="mb-3">
+            {{ form.password2.label_tag }}
             {{ form.password2 }}
-        </div>
-        <div>
-            {{ error }}
+            {{ form.password2.errors }}
         </div>
 
         <button class="w-100 btn btn-lg btn-primary" type="submit">Зарегистрироваться</button>
-        <p class="text-center text-uppercase text-muted pt-3">--- Или ---</p>
-        <a href="{% url 'user:auth' %}" class="w-100 btn btn-lg btn-outline-primary">Войти</a>
+        <p class="text-center text-uppercase text-muted pt-3">— или —</p>
+        <a href="{% url 'user:auth' %}" class="w-100 btn btn-outline-primary">Войти</a>
     </form>
 {% endblock %}
-
