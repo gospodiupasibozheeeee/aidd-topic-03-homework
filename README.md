@@ -89,4 +89,4 @@ python manage.py check
 
 Документы анализа и требований: [ANALYSIS.md](ANALYSIS.md),
 [REQUIREMENTS.md](REQUIREMENTS.md), [MODERNIZATION.md](MODERNIZATION.md),
-[FEATURES.md](FEATURES.md).
+[FEATURES.md](FEATURES.md), [COMPARISON.md](COMPARISON.md).
